@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Noyau sans dependance Windows : parametres, journal, geste, roue, formats, operations fichiers. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>FileWheel.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="FileWheel.Tests" />
+  </ItemGroup>
+</Project>

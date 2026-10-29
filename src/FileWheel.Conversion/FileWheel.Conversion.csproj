@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Moteur de conversion modulaire et fournisseurs. Aucune dependance Windows. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>FileWheel.Conversion</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileWheel.Core\FileWheel.Core.csproj" />
+    <InternalsVisibleTo Include="FileWheel.Tests" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Integration Windows : crochets clavier/souris, Shell, zone de notification, DWM, demarrage, WIC. -->
+  <Import Project="..\..\build\WindowsDesktop.props" />
+  <PropertyGroup>
+    <RootNamespace>FileWheel.Windows</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileWheel.Core\FileWheel.Core.csproj" />
+    <ProjectReference Include="..\FileWheel.Conversion\FileWheel.Conversion.csproj" />
+  </ItemGroup>
+</Project>

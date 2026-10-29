@@ -1,0 +1,28 @@
+<Project>
+  <!--
+    Proprietes communes a tous les projets FileWheel.
+
+    Compilation hors Windows (CI Linux) : les projets d'interface (FileWheel.Windows,
+    FileWheel.App) sont alors compiles contre une assemblee de reference WPF
+    generee a partir des sources publiques de dotnet/wpf (voir build/make-wpf-ref.sh).
+    Cela sert uniquement a VERIFIER le code (types, signatures). Le binaire
+    distribue est toujours produit sous Windows par INSTALLER.bat.
+  -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>0.2.0</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
+    <Product>FileWheel</Product>
+    <Company>FileWheel</Company>
+    <Copyright>FileWheel - code sous licence MIT</Copyright>
+    <Deterministic>true</Deterministic>
+    <SatelliteResourceLanguages>fr</SatelliteResourceLanguages>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <FwIsWindows Condition="'$(OS)' == 'Windows_NT'">true</FwIsWindows>
+    <FwIsWindows Condition="'$(OS)' != 'Windows_NT'">false</FwIsWindows>
+    <WpfRefPath Condition="'$(WpfRefPath)' == ''">$(MSBuildThisFileDirectory)build/wpfref/WpfRefAll.dll</WpfRefPath>
+  </PropertyGroup>
+</Project>

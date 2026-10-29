@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Harnais de tests maison (aucune dependance NuGet). Lancement : dotnet run, projet tests/FileWheel.Tests -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>FileWheel.Tests</RootNamespace>
+    <NoWarn>$(NoWarn);CS1998</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FileWheel.Core\FileWheel.Core.csproj" />
+    <ProjectReference Include="..\..\src\FileWheel.Conversion\FileWheel.Conversion.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="make_samples.py" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

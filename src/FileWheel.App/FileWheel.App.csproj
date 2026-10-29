@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Application FileWheel : point d'entree, roue, fenetres (WPF, interface ecrite en C#). -->
+  <Import Project="..\..\build\WindowsDesktop.props" />
+  <PropertyGroup>
+    <OutputType Condition="'$(FwIsWindows)' == 'true'">WinExe</OutputType>
+    <OutputType Condition="'$(FwIsWindows)' != 'true'">Library</OutputType>
+    <RootNamespace>FileWheel.App</RootNamespace>
+    <AssemblyName>FileWheel</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\assets\filewheel.ico</ApplicationIcon>
+    <StartupObject Condition="'$(FwIsWindows)' == 'true'">FileWheel.App.Program</StartupObject>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileWheel.Core\FileWheel.Core.csproj" />
+    <ProjectReference Include="..\FileWheel.Conversion\FileWheel.Conversion.csproj" />
+    <ProjectReference Include="..\FileWheel.Windows\FileWheel.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\assets\filewheel.ico" Link="filewheel.ico" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\assets\filewheel.png" Link="filewheel.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

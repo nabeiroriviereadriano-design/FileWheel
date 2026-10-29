@@ -1,0 +1,17 @@
+# Compilation
+bin/
+obj/
+publish/
+*.user
+.vs/
+.vscode/
+
+# Installateur produit
+FileWheel-Setup-*.exe
+
+# Assemblee de reference WPF pour la verification de types hors Windows (generee localement, non distribuee)
+build/wpfref/
+
+# Divers
+__pycache__/
+*.log

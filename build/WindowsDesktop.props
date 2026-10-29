@@ -1,0 +1,36 @@
+<Project>
+  <!--
+    Projets d'interface Windows (WPF).
+    - Sous Windows : net10.0-windows + UseWPF (compilation normale, binaire distribue).
+    - Ailleurs (CI Linux) : compilation de VERIFICATION contre des assemblees de reference WPF
+      generees depuis les sources publiques de dotnet/wpf (build/make-wpf-ref.sh). Le resultat
+      n'est pas executable ; il sert a garantir que le code compile avant d'arriver sur Windows.
+  -->
+  <PropertyGroup Condition="'$(FwIsWindows)' == 'true'">
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(FwIsWindows)' != 'true'">
+    <TargetFramework>net10.0</TargetFramework>
+    <DefineConstants>$(DefineConstants);FW_TYPECHECK</DefineConstants>
+    <RestoreAdditionalProjectSources>/root/localfeed</RestoreAdditionalProjectSources>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+  <!--
+    Le SDK Windows Desktop RETIRE System.IO et System.Net.Http des « using » implicites quand UseWPF
+    est actif (conflit System.IO.Path / System.Windows.Shapes.Path). On reproduit ce comportement
+    en verification de types pour que les erreurs apparaissent aussi hors Windows.
+  -->
+  <ItemGroup Condition="'$(FwIsWindows)' != 'true'">
+    <Using Remove="System.IO" />
+    <Using Remove="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(FwIsWindows)' != 'true'">
+    <Reference Include="WpfRefAll">
+      <HintPath>$(WpfRefPath)</HintPath>
+    </Reference>
+    <PackageReference Include="System.IO.Packaging" Version="10.0.13" />
+    <PackageReference Include="System.Windows.Extensions" Version="10.0.13" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.13" />
+  </ItemGroup>
+</Project>
