@@ -6,7 +6,7 @@
     FileWheel.App) sont alors compiles contre une assemblee de reference WPF
     generee a partir des sources publiques de dotnet/wpf (voir build/make-wpf-ref.sh).
     Cela sert uniquement a VERIFIER le code (types, signatures). Le binaire
-    distribue est toujours produit sous Windows par INSTALLER.bat.
+    distribue est toujours produit sous Windows par INSTALL.bat.
   -->
   <PropertyGroup>
     <LangVersion>latest</LangVersion>

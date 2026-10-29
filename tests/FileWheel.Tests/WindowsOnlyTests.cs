@@ -5,7 +5,7 @@ namespace FileWheel.Tests;
 /// <summary>
 /// Parties qui ne peuvent s'executer que sous Windows (crochets, glisser-deposer OLE, Shell, WPF, WIC).
 /// Elles sont compilees ici contre les assemblees de reference, mais leur comportement doit etre verifie
-/// sur un vrai Windows (liste de controle : docs/VERIFICATION-WINDOWS.md). Elles figurent dans le rapport
+/// sur un vrai Windows (liste de controle : docs/WINDOWS-CHECKLIST.md). Elles figurent dans le rapport
 /// pour qu'aucune case ne soit cochee a tort.
 /// </summary>
 public static class WindowsOnlyTests
@@ -25,6 +25,6 @@ public static class WindowsOnlyTests
             "Installateur FileWheel-Setup.exe sur un vrai Windows (installer, mettre à jour, désinstaller)",
         ];
         foreach (var item in items)
-            await Run(item, () => Skip("nécessite Windows : à valider sur PC avec docs/VERIFICATION-WINDOWS.md (le code C# est compilé et vérifié par typage ici)"));
+            await Run(item, () => Skip("nécessite Windows : à valider sur PC avec docs/WINDOWS-CHECKLIST.md (le code C# est compilé et vérifié par typage ici)"));
     }
 }

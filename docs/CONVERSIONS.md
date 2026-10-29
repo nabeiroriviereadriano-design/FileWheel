@@ -1,206 +1,206 @@
-# Conversions prises en charge par FileWheel
+# Conversions supported by FileWheel
 
-Liste **générée automatiquement** à partir des capacités déclarées par chaque fournisseur (`dotnet run --project tests/FileWheel.Tests -- --catalogue docs/CONVERSIONS.md`).
-Une conversion n'apparaît dans la roue que si son moteur est présent ; sinon elle est grisée avec le nom du moteur à installer.
-Les conversions par les codecs Windows (WIC) ne figurent pas ici : elles dépendent des codecs installés sur le PC (PNG, JPEG, BMP, TIFF, GIF, ICO, et selon les extensions du Store : HEIC, WebP, AVIF, JPEG XR, RAW).
+List **generated automatically** from the capabilities declared by each provider (`dotnet run --project tests/FileWheel.Tests -- --catalogue docs/CONVERSIONS.md`; the generator outputs French, the app's language — this file is its English translation).
+A conversion only appears in the wheel if its engine is present; otherwise it is greyed out with the name of the engine to install.
+Conversions through the Windows codecs (WIC) are not listed here: they depend on the codecs installed on the PC (PNG, JPEG, BMP, TIFF, GIF, ICO, and depending on Store extensions: HEIC, WebP, AVIF, JPEG XR, RAW).
 
-Les formats d'images ImageMagick listés ici sont ceux de l'environnement de test ; sous Windows, la liste réelle est relue au démarrage depuis l'ImageMagick installé (`magick -list format`) et peut être plus longue.
+The ImageMagick image formats listed here are those of the test environment; on Windows, the actual list is read at startup from the installed ImageMagick (`magick -list format`) and may be longer.
 
-Légende des pertes : **aucune** = contenu conservé ; **qualité** = compression avec perte (image, son, vidéo) ; **structure** = mise en forme, métadonnées ou éléments que le format cible ne sait pas représenter. Le détail est affiché avant chaque conversion.
+Loss legend: **none** = content kept; **quality** = lossy compression (image, sound, video); **structure** = formatting, metadata or elements the target format cannot represent. Details are shown before each conversion.
 
-## Documents (intégré)
+## Documents (built-in)
 
-Moteur : intégré (aucun programme externe). 9 conversion(s).
+Engine: built-in (no external program). 9 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| md | html | conversion | aucune | Le HTML brut éventuel est échappé (jamais exécuté). |
-| txt | html | conversion | aucune |  |
-| epub | html | conversion | structure / mise en forme | Un seul fichier HTML (chapitres à la suite, images incluses). Mise en page d'origine approximative. Livres protégés par DRM refusés. |
-| txt | pdf | conversion | aucune | Polices standard PDF (Helvetica/Courier) : les caractères hors alphabet latin occidental sont remplacés par « ? ». |
-| jpg, png | pdf | conversion | aucune | JPEG intégré tel quel (aucune recompression), PNG intégré sans perte. |
-| jpg, png | pdf | assemblage | aucune | **Assembler les images en un PDF** — Une page par image, dans l'ordre de la liste. Plusieurs fichiers → un seul. |
-| md | txt | conversion | aucune |  |
-| html | txt | conversion | structure / mise en forme | Seul le texte est conservé (mise en forme, images et liens perdus). |
-| epub | txt | conversion | structure / mise en forme | Texte seul. Livres protégés par DRM refusés. |
+| md | html | conversion | none | Any raw HTML is escaped (never executed). |
+| txt | html | conversion | none |  |
+| epub | html | conversion | structure / formatting | A single HTML file (chapters in sequence, images included). Original layout approximated. DRM-protected books refused. |
+| txt | pdf | conversion | none | Standard PDF fonts (Helvetica/Courier): characters outside the Western Latin alphabet are replaced by "?". |
+| jpg, png | pdf | conversion | none | JPEG embedded as is (no recompression), PNG embedded losslessly. |
+| jpg, png | pdf | merge | none | **Combine the images into one PDF** — One page per image, in list order. Several files → one. |
+| md | txt | conversion | none |  |
+| html | txt | conversion | structure / formatting | Only the text is kept (formatting, images and links lost). |
+| epub | txt | conversion | structure / formatting | Text only. DRM-protected books refused. |
 
-## Données (intégré)
+## Data (built-in)
 
-Moteur : intégré (aucun programme externe). 7 conversion(s).
+Engine: built-in (no external program). 7 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| csv, json, tsv, xlsx, xml, yaml | csv | conversion | aucune | Les structures imbriquées sont aplaties selon la stratégie choisie. |
-| xlsx | dossier de csv | découpage | aucune | **Toutes les feuilles en CSV (un fichier par feuille)** |
-| csv, tsv, xlsx, xml, yaml | json | conversion | aucune |  |
-| csv, json, tsv, xlsx, xml, yaml | tsv | conversion | aucune | Les structures imbriquées sont aplaties selon la stratégie choisie. |
-| csv, json, tsv, xml, yaml | xlsx | conversion | aucune | Les structures imbriquées sont aplaties selon la stratégie choisie. |
-| csv, json, tsv, xlsx, yaml | xml | conversion | aucune | Convention : attributs « @nom », texte « #text », éléments répétés en tableaux. |
-| csv, json, tsv, xlsx, xml | yaml | conversion | aucune |  |
+| csv, json, tsv, xlsx, xml, yaml | csv | conversion | none | Nested structures are flattened according to the chosen strategy. |
+| xlsx | folder of csv | split | none | **All sheets as CSV (one file per sheet)** |
+| csv, tsv, xlsx, xml, yaml | json | conversion | none |  |
+| csv, json, tsv, xlsx, xml, yaml | tsv | conversion | none | Nested structures are flattened according to the chosen strategy. |
+| csv, json, tsv, xml, yaml | xlsx | conversion | none | Nested structures are flattened according to the chosen strategy. |
+| csv, json, tsv, xlsx, yaml | xml | conversion | none | Convention: attributes "@name", text "#text", repeated elements as arrays. |
+| csv, json, tsv, xlsx, xml | yaml | conversion | none |  |
 
-## 3D (intégré)
+## 3D (built-in)
 
-Moteur : intégré (aucun programme externe). 5 conversion(s).
+Engine: built-in (no external program). 5 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| glb, gltf, obj, ply, stl | 3mf | conversion | structure / mise en forme | Géométrie seule : matériaux, couleurs, textures, normales et animations ne sont pas conservés. Unité 3MF : millimètre (les fichiers STL/OBJ n'ont pas d'unité, les valeurs sont recopiées telles quelles). |
-| 3mf, gltf, obj, ply, stl | glb | conversion | structure / mise en forme | Géométrie seule : matériaux, couleurs, textures, normales et animations ne sont pas conservés. |
-| 3mf, glb, gltf, ply, stl | obj | conversion | structure / mise en forme | Géométrie seule : matériaux, couleurs, textures, normales et animations ne sont pas conservés. |
-| 3mf, glb, gltf, obj, stl | ply | conversion | structure / mise en forme | Géométrie seule : matériaux, couleurs, textures, normales et animations ne sont pas conservés. |
-| 3mf, glb, gltf, obj, ply | stl | conversion | structure / mise en forme | Géométrie seule : matériaux, couleurs, textures, normales et animations ne sont pas conservés. |
+| glb, gltf, obj, ply, stl | 3mf | conversion | structure / formatting | Geometry only: materials, colors, textures, normals and animations are not kept. 3MF unit: millimeter (STL/OBJ files have no unit, values are copied as is). |
+| 3mf, gltf, obj, ply, stl | glb | conversion | structure / formatting | Geometry only: materials, colors, textures, normals and animations are not kept. |
+| 3mf, glb, gltf, ply, stl | obj | conversion | structure / formatting | Geometry only: materials, colors, textures, normals and animations are not kept. |
+| 3mf, glb, gltf, obj, stl | ply | conversion | structure / formatting | Geometry only: materials, colors, textures, normals and animations are not kept. |
+| 3mf, glb, gltf, obj, ply | stl | conversion | structure / formatting | Geometry only: materials, colors, textures, normals and animations are not kept. |
 
-## Polices (intégré)
+## Fonts (built-in)
 
-Moteur : intégré (aucun programme externe). 3 conversion(s).
+Engine: built-in (no external program). 3 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| woff | otf | conversion | aucune | Décompression sans perte. Si la police contient des contours TrueType, le résultat est une police TTF. |
-| woff | ttf | conversion | aucune | Décompression sans perte. Si la police contient des contours CFF, le résultat est une police OpenType (OTF). |
-| otf, ttf | woff | conversion | aucune | Tables recopiées à l'identique, compressées (sans perte). |
+| woff | otf | conversion | none | Lossless decompression. If the font contains TrueType outlines, the result is a TTF font. |
+| woff | ttf | conversion | none | Lossless decompression. If the font contains CFF outlines, the result is an OpenType font (OTF). |
+| otf, ttf | woff | conversion | none | Tables copied identically, compressed (lossless). |
 
-## E-mails, contacts, agendas (intégré)
+## E-mails, contacts, calendars (built-in)
 
-Moteur : intégré (aucun programme externe). 5 conversion(s).
+Engine: built-in (no external program). 5 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| vcf | csv | conversion | aucune | Champs courants (nom, e-mails, téléphones, adresse, organisation…) ; photos non conservées. |
-| ics | csv | conversion | aucune | Un événement par ligne ; rappels et invités non conservés, règles de répétition recopiées telles quelles. |
-| mbox | dossier de eml | découpage | aucune | **Séparer en messages EML (un fichier par message)** |
-| eml | html | conversion | structure / mise en forme | Scripts et images distantes retirés ; pièces jointes seulement listées. |
-| eml | txt | conversion | structure / mise en forme | Texte du message et en-têtes ; pièces jointes seulement listées. |
+| vcf | csv | conversion | none | Common fields (name, e-mails, phones, address, organization…); photos not kept. |
+| ics | csv | conversion | none | One event per row; reminders and attendees not kept, recurrence rules copied as is. |
+| mbox | folder of eml | split | none | **Split into EML messages (one file per message)** |
+| eml | html | conversion | structure / formatting | Scripts and remote images removed; attachments only listed. |
+| eml | txt | conversion | structure / formatting | Message text and headers; attachments only listed. |
 
-## Archives (intégré + 7-Zip)
+## Archives (built-in + 7-Zip)
 
-Moteur : 7-Zip. 5 conversion(s).
+Engine: 7-Zip. 5 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| bz2, gz, rar, tar, tgz, xz, zip | 7z | recompression | aucune | **Convertir l'archive en 7Z** — Le contenu est extrait puis recompressé ; l'archive d'origine est conservée. |
-| gz, tar, tgz, zip | dossier de extract | extraction | aucune | **Extraire dans un dossier** — Chemins dangereux et liens ignorés ; plafonds de taille appliqués. |
-| 7z, bz2, rar, xz | dossier de extract | extraction | aucune | **Extraire dans un dossier** — RAR : uniquement si 7-Zip est installé sur le PC (lecture seule, la création de RAR n'est pas possible). |
-| 7z, bz2, gz, rar, tar, xz, zip | tgz | recompression | aucune | **Convertir l'archive en TAR.GZ** — Le contenu est extrait puis recompressé ; l'archive d'origine est conservée. |
-| 7z, bz2, gz, rar, tar, tgz, xz | zip | recompression | aucune | **Convertir l'archive en ZIP** — Le contenu est extrait puis recompressé ; l'archive d'origine est conservée. |
+| bz2, gz, rar, tar, tgz, xz, zip | 7z | recompression | none | **Convert the archive to 7Z** — The content is extracted then recompressed; the original archive is kept. |
+| gz, tar, tgz, zip | folder of extract | extraction | none | **Extract to a folder** — Dangerous paths and links skipped; size limits applied. |
+| 7z, bz2, rar, xz | folder of extract | extraction | none | **Extract to a folder** — RAR: only if 7-Zip is installed on the PC (read-only, creating RAR is not possible). |
+| 7z, bz2, gz, rar, tar, xz, zip | tgz | recompression | none | **Convert the archive to TAR.GZ** — The content is extracted then recompressed; the original archive is kept. |
+| 7z, bz2, gz, rar, tar, tgz, xz | zip | recompression | none | **Convert the archive to ZIP** — The content is extracted then recompressed; the original archive is kept. |
 
 ## PDFium (PDF)
 
-Moteur : PDFium, ImageMagick. 3 conversion(s).
+Engine: PDFium, ImageMagick. 3 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| pdf | dossier de jpg | pages en images | qualité (compression) | **Pages en images JPEG** |
-| pdf | dossier de png | pages en images | aucune | **Pages en images PNG** — Rendu sans perte à la résolution choisie (le texte devient une image). |
-| pdf | txt | extraction de texte | structure / mise en forme | **Extraire le texte (TXT)** — Extraction du texte : mise en page, images et tableaux non conservés. Sans reconnaissance optique (OCR) : un PDF scanné ne contient pas de texte extractible. |
+| pdf | folder of jpg | pages to images | quality (compression) | **Pages as JPEG images** |
+| pdf | folder of png | pages to images | none | **Pages as PNG images** — Lossless rendering at the chosen resolution (text becomes an image). |
+| pdf | txt | text extraction | structure / formatting | **Extract the text (TXT)** — Text extraction: layout, images and tables not kept. No optical character recognition (OCR): a scanned PDF contains no extractable text. |
 
-## FFmpeg (audio et vidéo)
+## FFmpeg (audio and video)
 
-Moteur : FFmpeg. 42 conversion(s).
+Engine: FFmpeg. 42 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | aac | conversion | qualité (compression) |  |
-| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | aac | extraction audio | qualité (compression) | **Extraire l'audio (AAC (ADTS))** |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | aac | assemblage | qualité (compression) | **Fusionner en un seul AAC (ADTS)** — Plusieurs fichiers → un seul. |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | aif | conversion | aucune |  |
-| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | aif | extraction audio | aucune | **Extraire l'audio (AIFF)** |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | aif | assemblage | aucune | **Fusionner en un seul AIFF** — Plusieurs fichiers → un seul. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | avi | conversion | qualité (compression) | Copie sans perte (remuxage) quand les codecs sont compatibles ; sinon réencodage avec perte. Le mode utilisé est indiqué avant le lancement. |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | flac | conversion | aucune |  |
-| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | flac | extraction audio | aucune | **Extraire l'audio (FLAC)** |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | flac | assemblage | aucune | **Fusionner en un seul FLAC** — Plusieurs fichiers → un seul. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | flv | conversion | qualité (compression) | Copie sans perte (remuxage) quand les codecs sont compatibles ; sinon réencodage avec perte. Le mode utilisé est indiqué avant le lancement. |
-| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | gif | conversion | qualité (compression) | **Convertir en GIF animé** — GIF : palette de 256 couleurs, pas de son. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | jpg | miniature | qualité (compression) | **Miniature (JPG)** |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | dossier de jpg | séquence d'images | qualité (compression) | **Séquence d'images (JPG)** |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | m4a | conversion | qualité (compression) |  |
-| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | m4a | extraction audio | qualité (compression) | **Extraire l'audio (M4A (AAC/ALAC))** |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | m4a | assemblage | qualité (compression) | **Fusionner en un seul M4A (AAC/ALAC)** — Plusieurs fichiers → un seul. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | m4v | conversion | qualité (compression) | Copie sans perte (remuxage) quand les codecs sont compatibles ; sinon réencodage avec perte. Le mode utilisé est indiqué avant le lancement. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | mkv | conversion | qualité (compression) | Copie sans perte (remuxage) quand les codecs sont compatibles ; sinon réencodage avec perte. Le mode utilisé est indiqué avant le lancement. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | mov | conversion | qualité (compression) | Copie sans perte (remuxage) quand les codecs sont compatibles ; sinon réencodage avec perte. Le mode utilisé est indiqué avant le lancement. |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | mp3 | conversion | qualité (compression) |  |
-| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | mp3 | extraction audio | qualité (compression) | **Extraire l'audio (MP3)** |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | mp3 | assemblage | qualité (compression) | **Fusionner en un seul MP3** — Plusieurs fichiers → un seul. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | mp4 | conversion | qualité (compression) | Copie sans perte (remuxage) quand les codecs sont compatibles ; sinon réencodage avec perte. Le mode utilisé est indiqué avant le lancement. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | mpg | conversion | qualité (compression) | Copie sans perte (remuxage) quand les codecs sont compatibles ; sinon réencodage avec perte. Le mode utilisé est indiqué avant le lancement. |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | ogg | conversion | qualité (compression) |  |
-| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | ogg | extraction audio | qualité (compression) | **Extraire l'audio (Ogg Vorbis)** |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | ogg | assemblage | qualité (compression) | **Fusionner en un seul Ogg Vorbis** — Plusieurs fichiers → un seul. |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | opus | conversion | qualité (compression) |  |
-| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | opus | extraction audio | qualité (compression) | **Extraire l'audio (Opus)** |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | opus | assemblage | qualité (compression) | **Fusionner en un seul Opus** — Plusieurs fichiers → un seul. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | png | miniature | aucune | **Miniature (PNG)** |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | dossier de png | séquence d'images | aucune | **Séquence d'images (PNG)** |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | ts | conversion | qualité (compression) | Copie sans perte (remuxage) quand les codecs sont compatibles ; sinon réencodage avec perte. Le mode utilisé est indiqué avant le lancement. |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | wav | conversion | aucune |  |
-| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | wav | extraction audio | aucune | **Extraire l'audio (WAV)** |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | wav | assemblage | aucune | **Fusionner en un seul WAV** — Plusieurs fichiers → un seul. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | webm | conversion | qualité (compression) | Copie sans perte (remuxage) quand les codecs sont compatibles ; sinon réencodage avec perte. Le mode utilisé est indiqué avant le lancement. |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | wma | conversion | qualité (compression) |  |
-| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | wma | extraction audio | qualité (compression) | **Extraire l'audio (Windows Media Audio (WMA))** |
-| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | wma | assemblage | qualité (compression) | **Fusionner en un seul Windows Media Audio (WMA)** — Plusieurs fichiers → un seul. |
-| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | wmv | conversion | qualité (compression) | Copie sans perte (remuxage) quand les codecs sont compatibles ; sinon réencodage avec perte. Le mode utilisé est indiqué avant le lancement. |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | aac | conversion | quality (compression) |  |
+| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | aac | audio extraction | quality (compression) | **Extract the audio (AAC (ADTS))** |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | aac | merge | quality (compression) | **Merge into a single AAC (ADTS)** — Several files → one. |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | aif | conversion | none |  |
+| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | aif | audio extraction | none | **Extract the audio (AIFF)** |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | aif | merge | none | **Merge into a single AIFF** — Several files → one. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | avi | conversion | quality (compression) | Lossless copy (remux) when the codecs are compatible; otherwise lossy re-encode. The mode used is shown before starting. |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | flac | conversion | none |  |
+| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | flac | audio extraction | none | **Extract the audio (FLAC)** |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | flac | merge | none | **Merge into a single FLAC** — Several files → one. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | flv | conversion | quality (compression) | Lossless copy (remux) when the codecs are compatible; otherwise lossy re-encode. The mode used is shown before starting. |
+| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | gif | conversion | quality (compression) | **Convert to animated GIF** — GIF: 256-color palette, no sound. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | jpg | thumbnail | quality (compression) | **Thumbnail (JPG)** |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | folder of jpg | image sequence | quality (compression) | **Image sequence (JPG)** |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | m4a | conversion | quality (compression) |  |
+| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | m4a | audio extraction | quality (compression) | **Extract the audio (M4A (AAC/ALAC))** |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | m4a | merge | quality (compression) | **Merge into a single M4A (AAC/ALAC)** — Several files → one. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | m4v | conversion | quality (compression) | Lossless copy (remux) when the codecs are compatible; otherwise lossy re-encode. The mode used is shown before starting. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | mkv | conversion | quality (compression) | Lossless copy (remux) when the codecs are compatible; otherwise lossy re-encode. The mode used is shown before starting. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | mov | conversion | quality (compression) | Lossless copy (remux) when the codecs are compatible; otherwise lossy re-encode. The mode used is shown before starting. |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | mp3 | conversion | quality (compression) |  |
+| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | mp3 | audio extraction | quality (compression) | **Extract the audio (MP3)** |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | mp3 | merge | quality (compression) | **Merge into a single MP3** — Several files → one. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | mp4 | conversion | quality (compression) | Lossless copy (remux) when the codecs are compatible; otherwise lossy re-encode. The mode used is shown before starting. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | mpg | conversion | quality (compression) | Lossless copy (remux) when the codecs are compatible; otherwise lossy re-encode. The mode used is shown before starting. |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | ogg | conversion | quality (compression) |  |
+| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | ogg | audio extraction | quality (compression) | **Extract the audio (Ogg Vorbis)** |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | ogg | merge | quality (compression) | **Merge into a single Ogg Vorbis** — Several files → one. |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | opus | conversion | quality (compression) |  |
+| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | opus | audio extraction | quality (compression) | **Extract the audio (Opus)** |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | opus | merge | quality (compression) | **Merge into a single Opus** — Several files → one. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | png | thumbnail | none | **Thumbnail (PNG)** |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | folder of png | image sequence | none | **Image sequence (PNG)** |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | ts | conversion | quality (compression) | Lossless copy (remux) when the codecs are compatible; otherwise lossy re-encode. The mode used is shown before starting. |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | wav | conversion | none |  |
+| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | wav | audio extraction | none | **Extract the audio (WAV)** |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | wav | merge | none | **Merge into a single WAV** — Several files → one. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | webm | conversion | quality (compression) | Lossless copy (remux) when the codecs are compatible; otherwise lossy re-encode. The mode used is shown before starting. |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | wma | conversion | quality (compression) |  |
+| 3gp, avi, flv, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | wma | audio extraction | quality (compression) | **Extract the audio (Windows Media Audio (WMA))** |
+| aac, aif, amr, flac, m4a, mp3, ogg, opus, wav, wma | wma | merge | quality (compression) | **Merge into a single Windows Media Audio (WMA)** — Several files → one. |
+| 3gp, avi, flv, gif, m4v, mkv, mov, mp4, mpg, ts, webm, wmv | wmv | conversion | quality (compression) | Lossless copy (remux) when the codecs are compatible; otherwise lossy re-encode. The mode used is shown before starting. |
 
 ## ImageMagick (images)
 
-Moteur : ImageMagick. 15 conversion(s).
+Engine: ImageMagick. 15 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | avif | conversion | qualité (compression) | AVIF compresse avec perte (qualité réglable). |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | bmp | conversion | aucune |  |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | dds | conversion | aucune |  |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | exr | conversion | aucune |  |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | gif | conversion | aucune |  |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | heic | conversion | qualité (compression) | HEIC/HEIF compresse avec perte (qualité réglable). |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | ico | conversion | aucune | Icône multi-tailles 16 à 256 px. |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | jpg | conversion | qualité (compression) | JPEG compresse avec perte (qualité réglable). |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | pdf | conversion | aucune | **Convertir en PDF** |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | pdf | assemblage | aucune | **Assembler les images en un PDF** — Plusieurs fichiers → un seul. |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | png | conversion | aucune |  |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | psd | conversion | aucune |  |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | tga | conversion | aucune |  |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | tif | conversion | aucune |  |
-| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | webp | conversion | aucune |  |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | avif | conversion | quality (compression) | AVIF is lossy (adjustable quality). |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | bmp | conversion | none |  |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | dds | conversion | none |  |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | exr | conversion | none |  |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | gif | conversion | none |  |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | heic | conversion | quality (compression) | HEIC/HEIF is lossy (adjustable quality). |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | ico | conversion | none | Multi-size icon, 16 to 256 px. |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | jpg | conversion | quality (compression) | JPEG is lossy (adjustable quality). |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | pdf | conversion | none | **Convert to PDF** |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | pdf | merge | none | **Combine the images into one PDF** — Several files → one. |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | png | conversion | none |  |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | psd | conversion | none |  |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | tga | conversion | none |  |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | tif | conversion | none |  |
+| avif, bmp, dds, exr, gif, hdr, heic, ico, jpg, png, psd, cr2, svg, tga, tif, webp | webp | conversion | none |  |
 
 ## LibreOffice (documents)
 
-Moteur : LibreOffice, PDFium. 18 conversion(s).
+Engine: LibreOffice, PDFium. 18 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| ods, xls, xlsx | csv | conversion | aucune | CSV : seule la première feuille est exportée, sans formules ni mise en forme. Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| docx, html, md, odt, rtf, txt | doc | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| doc, html, md, odt, rtf, txt | docx | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| pdf | docx | conversion | structure / mise en forme | **Reconstruire en DOCX modifiable** — Reconstruction approximative : le texte est placé dans des zones positionnées. Un PDF complexe (colonnes, tableaux) ne sera pas fidèle. PDF scanné : pas de texte reconnu (pas d'OCR). |
-| doc, docx, html, md, odt, rtf, txt | epub | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| doc, docx, md, odt, rtf, txt | html | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| ppt, pptx | odp | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| csv, xls, xlsx | ods | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| doc, docx, html, md, rtf, txt | odt | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| pdf | odt | conversion | structure / mise en forme | **Reconstruire en ODT modifiable** — Reconstruction approximative (zones de texte positionnées). |
-| csv, doc, docx, html, md, odp, ods, odt, ppt, pptx, rtf, txt, xls, xlsx | pdf | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| odp, ppt, pptx | dossier de png | pages en images | aucune | **Diapositives en images PNG** — Chaque diapositive devient une image (animations perdues). |
-| odp, pptx | ppt | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| odp, ppt | pptx | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| doc, docx, html, md, odt, txt | rtf | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| doc, docx, html, md, odt, rtf | txt | conversion | structure / mise en forme | Texte seul : la mise en forme est perdue. Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| csv, ods, xlsx | xls | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
-| csv, ods, xls | xlsx | conversion | aucune | Mise en page préservée au mieux ; des différences de polices ou de rendu sont possibles selon les polices installées. |
+| ods, xls, xlsx | csv | conversion | none | CSV: only the first sheet is exported, without formulas or formatting. Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| docx, html, md, odt, rtf, txt | doc | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| doc, html, md, odt, rtf, txt | docx | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| pdf | docx | conversion | structure / formatting | **Rebuild as editable DOCX** — Approximate reconstruction: text is placed in positioned boxes. A complex PDF (columns, tables) will not be faithful. Scanned PDF: no text recognized (no OCR). |
+| doc, docx, html, md, odt, rtf, txt | epub | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| doc, docx, md, odt, rtf, txt | html | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| ppt, pptx | odp | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| csv, xls, xlsx | ods | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| doc, docx, html, md, rtf, txt | odt | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| pdf | odt | conversion | structure / formatting | **Rebuild as editable ODT** — Approximate reconstruction (positioned text boxes). |
+| csv, doc, docx, html, md, odp, ods, odt, ppt, pptx, rtf, txt, xls, xlsx | pdf | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| odp, ppt, pptx | folder of png | pages to images | none | **Slides as PNG images** — Each slide becomes an image (animations lost). |
+| odp, pptx | ppt | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| odp, ppt | pptx | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| doc, docx, html, md, odt, txt | rtf | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| doc, docx, html, md, odt, rtf | txt | conversion | structure / formatting | Text only: formatting is lost. Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| csv, ods, xlsx | xls | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
+| csv, ods, xls | xlsx | conversion | none | Layout preserved as well as possible; font or rendering differences may occur depending on installed fonts. |
 
-## Calibre (livres numériques)
+## Calibre (e-books)
 
-Moteur : Calibre (ebook-convert). 7 conversion(s).
+Engine: Calibre (ebook-convert). 7 conversion(s).
 
-| Depuis | Vers | Type | Perte | Remarques |
+| From | To | Type | Loss | Notes |
 |---|---|---|---|---|
-| docx, epub, fb2, html, mobi, odt, pdf, rtf, txt | azw3 | conversion | structure / mise en forme | Mise en page adaptée par Calibre : polices et éléments interactifs peuvent changer. Livres protégés par DRM refusés. Entrée PDF : extraction approximative du texte. |
-| azw3, epub, fb2, html, mobi, odt, pdf, rtf, txt | docx | conversion | structure / mise en forme | Mise en page adaptée par Calibre : polices et éléments interactifs peuvent changer. Livres protégés par DRM refusés. Entrée PDF : extraction approximative du texte. |
-| azw3, docx, fb2, html, mobi, odt, pdf, rtf, txt | epub | conversion | structure / mise en forme | Mise en page adaptée par Calibre : polices et éléments interactifs peuvent changer. Livres protégés par DRM refusés. Entrée PDF : extraction approximative du texte. |
-| azw3, docx, epub, html, mobi, odt, pdf, rtf, txt | fb2 | conversion | structure / mise en forme | Mise en page adaptée par Calibre : polices et éléments interactifs peuvent changer. Livres protégés par DRM refusés. Entrée PDF : extraction approximative du texte. |
-| azw3, docx, epub, fb2, html, odt, pdf, rtf, txt | mobi | conversion | structure / mise en forme | Mise en page adaptée par Calibre : polices et éléments interactifs peuvent changer. Livres protégés par DRM refusés. Entrée PDF : extraction approximative du texte. |
-| azw3, docx, epub, fb2, html, mobi, odt, rtf, txt | pdf | conversion | structure / mise en forme | Mise en page recalculée : pagination différente de l'original. Livres protégés par DRM refusés. Entrée PDF : extraction approximative du texte. |
-| azw3, docx, epub, fb2, html, mobi, odt, pdf, rtf | txt | conversion | structure / mise en forme | Texte seul : images et mise en forme perdues. Livres protégés par DRM refusés. Entrée PDF : extraction approximative du texte. |
+| docx, epub, fb2, html, mobi, odt, pdf, rtf, txt | azw3 | conversion | structure / formatting | Layout adapted by Calibre: fonts and interactive elements may change. DRM-protected books refused. PDF input: approximate text extraction. |
+| azw3, epub, fb2, html, mobi, odt, pdf, rtf, txt | docx | conversion | structure / formatting | Layout adapted by Calibre: fonts and interactive elements may change. DRM-protected books refused. PDF input: approximate text extraction. |
+| azw3, docx, fb2, html, mobi, odt, pdf, rtf, txt | epub | conversion | structure / formatting | Layout adapted by Calibre: fonts and interactive elements may change. DRM-protected books refused. PDF input: approximate text extraction. |
+| azw3, docx, epub, html, mobi, odt, pdf, rtf, txt | fb2 | conversion | structure / formatting | Layout adapted by Calibre: fonts and interactive elements may change. DRM-protected books refused. PDF input: approximate text extraction. |
+| azw3, docx, epub, fb2, html, odt, pdf, rtf, txt | mobi | conversion | structure / formatting | Layout adapted by Calibre: fonts and interactive elements may change. DRM-protected books refused. PDF input: approximate text extraction. |
+| azw3, docx, epub, fb2, html, mobi, odt, rtf, txt | pdf | conversion | structure / formatting | Layout recomputed: pagination differs from the original. DRM-protected books refused. PDF input: approximate text extraction. |
+| azw3, docx, epub, fb2, html, mobi, odt, pdf, rtf | txt | conversion | structure / formatting | Text only: images and formatting lost. DRM-protected books refused. PDF input: approximate text extraction. |
 

@@ -1,17 +1,17 @@
 @echo off
-rem Desinstalle FileWheel (equivalent de Parametres Windows > Applications > FileWheel > Desinstaller).
+rem Uninstalls FileWheel (same as Windows Settings > Apps > FileWheel > Uninstall).
 setlocal
 set "DIR=%LOCALAPPDATA%\Programs\FileWheel"
 if exist "%DIR%\Uninstall.exe" (
   start "" "%DIR%\Uninstall.exe"
-  goto :fin
+  goto :end
 )
-rem Installation faite avec une ancienne version (0.1.x)
+rem Installation made with an old version (0.1.x)
 if exist "%DIR%\Uninstall-FileWheel.ps1" (
   powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DIR%\Uninstall-FileWheel.ps1"
-  goto :fin
+  goto :end
 )
-echo FileWheel n'est pas installe pour ce compte.
+echo FileWheel is not installed for this account.
 pause
-:fin
+:end
 endlocal

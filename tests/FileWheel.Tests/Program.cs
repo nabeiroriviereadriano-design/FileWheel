@@ -24,7 +24,7 @@ var env = $"Environnement : {System.Runtime.InteropServices.RuntimeInformation.O
           "Moteurs : " + string.Join(", ", FileWheel.Conversion.Engines.EngineCatalog.All
               .Select(e => $"{e.Name} {(Env.Engine.Dependencies.IsAvailable(e.Id) ? "présent" : "absent")}")) + ".";
 var report = T.Report(env);
-var reportPath = Environment.GetEnvironmentVariable("FILEWHEEL_TEST_OUTPUT") is { Length: > 0 } custom ? custom : Path.Combine(AppContext.BaseDirectory, "RESULTATS-TESTS.md");
+var reportPath = Environment.GetEnvironmentVariable("FILEWHEEL_TEST_OUTPUT") is { Length: > 0 } custom ? custom : Path.Combine(AppContext.BaseDirectory, "TEST-RESULTS.md");
 File.WriteAllText(reportPath, report);
 int fail = T.Results.Count(r => r.Status == "ÉCHEC");
 Console.WriteLine();

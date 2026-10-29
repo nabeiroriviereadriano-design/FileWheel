@@ -7,7 +7,7 @@
 ;    - reparer ou desinstaller (mode maintenance si la meme version est deja installee).
 ;  Le desinstalleur (Uninstall.exe) est enregistre dans Parametres Windows > Applications.
 ;
-;  Construit par installer\Build-Setup.ps1 (INSTALLER.bat) :
+;  Construit par installer\Build-Setup.ps1 (INSTALL.bat) :
 ;    makensis /DVERSION=0.2.0 /DPUBLISH_DIR=...\publish /DOUTFILE=...\FileWheel-Setup-0.2.0.exe FileWheel.nsi
 ; =====================================================================================
 

@@ -1,68 +1,69 @@
-# Limites connues de FileWheel 0.2.0
+# Known limitations of FileWheel 0.2.0
 
-Ce document liste honnêtement ce qui n'est pas fait, ce qui n'a pas pu être vérifié, et pourquoi.
+This document honestly lists what is not done, what could not be verified, and why.
 
-## Ce qui n'a pas été exécuté sur Windows
+## What has not been run on Windows
 
-FileWheel a été développé et testé dans un environnement Linux : le moteur de conversion, la logique de la roue (déclenchement, écrans multiples, menus, interaction) et les opérations de fichiers y ont été testés **réellement** (195 tests réussis, voir RESULTATS-TESTS.md).
+FileWheel was developed and tested in a Linux environment: the conversion engine, the wheel logic (trigger, multiple screens, menus, interaction) and the file operations were **really** tested there (204 tests passed, see TEST-RESULTS.md).
 
-Les parties propres à Windows sont **compilées et vérifiées par typage** contre les assemblées WPF de référence, mais **n'ont pas pu être lancées** :
-- crochets clavier/souris, masquage du menu Alt, glisser-déposer OLE au-dessus de l'Explorateur ;
-- API Shell (Corbeille, Propriétés, Ouvrir avec, Partager, raccourcis) ;
-- icône de notification, démarrage automatique, instance unique ;
-- toutes les fenêtres WPF et la charte graphique (aucune capture d'écran réelle n'a pu être faite) ;
-- conversions WIC ;
-- outils image (recadrer, fond, compresser, annoter, métadonnées) et nouvelle roue Express : compilés, jamais exécutés ;
-- l'installateur `FileWheel-Setup.exe` a été testé ici sous Wine (installation, mise à jour, désinstallation silencieuses, écrans Bienvenue / Mise à jour / Maintenance) ; le script de construction `Build-Setup.ps1` n'a pas pu être exécuté hors Windows.
+The Windows-specific parts **compile on a real Windows machine** (GitHub Actions, `windows-latest`), but most of them **have not been run** yet:
+- keyboard/mouse hooks, Alt menu suppression, OLE drag and drop over File Explorer;
+- Shell APIs (Recycle Bin, Properties, Open with, Share, shortcuts);
+- notification icon, auto-start, single instance;
+- all WPF windows and the design system (no real screenshot could be taken);
+- WIC conversions;
+- image tools (crop, background, compress, annotate, metadata) and the new Express wheel: compiled, never run;
+- the `FileWheel-Setup.exe` installer was tested under Wine (silent install, update and uninstall, Welcome / Update / Maintenance screens) and is built by GitHub Actions on Windows.
 
-La roue elle-même (déclenchement, affichage, dépôt) a été validée sur le PC de l'utilisateur en version 0.1.5.
+The wheel itself (trigger, display, drop) was validated on the user's PC in version 0.1.5.
 
-La compilation réelle se fait sur votre PC au moment de `INSTALLER.bat`. Si une erreur apparaît à cette étape ou au premier lancement, le message et le journal (`%LOCALAPPDATA%\FileWheel\logs`) permettent de la corriger. Liste de contrôle : VERIFICATION-WINDOWS.md.
+If an error appears at installation or first launch, the message and the log (`%LOCALAPPDATA%\FileWheel\logs`) make it possible to fix it. Checklist: WINDOWS-CHECKLIST.md.
 
-## Déclenchement
+## Trigger
 
-- Une application lancée **en administrateur** ne reçoit pas les fichiers glissés depuis un Explorateur non élevé (règle de Windows, UIPI). FileWheel doit tourner au même niveau que l'Explorateur.
-- Dans les fenêtres de l'Explorateur, l'élément sous le curseur est vérifié via l'Automatisation de l'interface (UIA) avec un délai maximal ; si Windows ne répond pas à temps, le mode « tolérant » (par défaut) affiche la roue quand même.
-- Les glisser depuis d'autres applications (navigateur, Outlook, archives ouvertes dans l'Explorateur, téléphone MTP) ne fournissent pas toujours de vrais chemins de fichiers : la roue l'indique et ne propose rien.
-- Sur certains claviers, Alt peut entrer en conflit avec des outils tiers ; changez la combinaison dans les paramètres.
+- An application running **as administrator** does not receive files dragged from a non-elevated File Explorer (a Windows rule, UIPI). FileWheel must run at the same level as File Explorer.
+- In File Explorer windows, the item under the cursor is checked through UI Automation (UIA) with a time limit; if Windows does not answer in time, the "tolerant" mode (default) shows the wheel anyway.
+- Drags from other applications (browser, Outlook, archives opened in File Explorer, MTP phones) do not always provide real file paths: the wheel says so and offers nothing.
+- On some keyboards, Alt may conflict with third-party tools; change the combination in the settings.
 
 ## Interface
 
-- **Flou d'arrière-plan** de la roue : expérimental (API non documentée de Windows), désactivé par défaut.
-- **Partager** : utilise la feuille de partage Windows quand elle est disponible ; sinon FileWheel ouvre l'Explorateur sur les fichiers.
-- Les animations de l'interrupteur à bascule ne sont pas animées (changement d'état instantané).
-- Les boutons de fenêtre restent ceux de Windows (pas de « feux tricolores » macOS), volontairement.
+- Wheel **background blur**: experimental (undocumented Windows API), off by default.
+- **Share**: uses the Windows share sheet when available; otherwise FileWheel opens File Explorer on the files.
+- The toggle switch does not animate (the state changes instantly).
+- Window buttons stay the Windows ones (no macOS "traffic lights"), on purpose.
+- The interface is only available in French.
 
 ## Conversion
 
-Non pris en charge (et donc jamais proposé) :
-- **OCR** : un PDF scanné ou une image ne donne pas de texte ;
-- **CAO** : STEP, IGES, DXF/DWG (reconnus, non convertis) ; **FBX** (format propriétaire) ;
-- **WOFF2** (reconnu, non converti) ;
-- **création d'archives RAR** (format propriétaire) ; l'extraction RAR nécessite 7-Zip ;
-- e-mails **MSG/PST** d'Outlook ;
-- livres protégés par **DRM** (refusés avec un message).
+Not supported (and therefore never offered):
+- **OCR**: a scanned PDF or an image does not produce text;
+- **CAD**: STEP, IGES, DXF/DWG (recognized, not converted); **FBX** (proprietary format);
+- **WOFF2** (recognized, not converted);
+- **creating RAR archives** (proprietary format); RAR extraction requires 7-Zip;
+- Outlook **MSG/PST** e-mails;
+- **DRM**-protected books (refused with a message).
 
-Pertes à connaître (toujours annoncées avant de convertir) :
-- PDF → DOCX/ODT : reconstruction approximative ;
-- 3D : géométrie seule (matériaux, textures, animations perdus) ;
-- texte → PDF intégré : polices standard PDF, caractères hors alphabet latin occidental remplacés par « ? » (utilisez LibreOffice pour les autres alphabets) ;
-- formats avec perte (JPEG, MP3, AAC, H.264…) : perte de qualité à chaque réencodage ; FileWheel copie sans réencoder quand c'est possible (remuxage vidéo).
+Losses to be aware of (always announced before converting):
+- PDF → DOCX/ODT: approximate reconstruction;
+- 3D: geometry only (materials, textures, animations lost);
+- text → built-in PDF: standard PDF fonts, characters outside the Western Latin alphabet replaced by "?" (use LibreOffice for other alphabets);
+- lossy formats (JPEG, MP3, AAC, H.264…): quality loss at each re-encode; FileWheel copies without re-encoding whenever possible (video remuxing).
 
-## Outils image
+## Image tools
 
-- Ils utilisent les codecs de Windows : WebP, HEIC et AVIF ne sont lisibles que si les extensions correspondantes sont installées (Microsoft Store) ; PSD, RAW, SVG, EXR passent d'abord par « Convertir › PNG ».
-- Windows ne sait pas écrire le WebP, le HEIC ni l'AVIF : le résultat d'un outil est alors enregistré en PNG.
-- Compresser en PNG est sans perte : le gain vient surtout de la taille maximale. Le JPEG est réencodé (léger effet à chaque passage).
-- « Copie sans métadonnées » réécrit les pixels : pour un JPEG, c'est un réencodage en qualité 95.
-- Annoter : le texte est saisi dans une petite fenêtre puis placé au clic (pas d'édition sur place).
+- They use the Windows codecs: WebP, HEIC and AVIF can only be read if the corresponding extensions are installed (Microsoft Store); PSD, RAW, SVG, EXR must first go through "Convert › PNG".
+- Windows cannot write WebP, HEIC or AVIF: a tool's result is then saved as PNG.
+- Compressing to PNG is lossless: the gain mostly comes from the maximum size. JPEG is re-encoded (slight effect at each pass).
+- "Copy without metadata" rewrites the pixels: for a JPEG, that is a re-encode at quality 95.
+- Annotate: text is typed in a small window and then placed with a click (no in-place editing).
 
-## Tâches
+## Tasks
 
-- **Pause** : aucun moteur actuel ne permet de suspendre proprement une conversion en cours ; seule l'annulation est proposée (le fichier partiel est supprimé). La file d'attente, elle, peut être mise en pause.
-- Le temps restant est estimé à partir de la progression rapportée par le moteur ; certains moteurs (LibreOffice, Calibre) n'en rapportent pas : la barre est alors indéterminée.
+- **Pause**: no current engine can cleanly suspend a running conversion; only cancelling is offered (the partial file is deleted). The queue itself can be paused.
+- Remaining time is estimated from the progress reported by the engine; some engines (LibreOffice, Calibre) do not report any: the bar is then indeterminate.
 
-## Moteurs
+## Engines
 
-- Les empreintes des moteurs ne sont pas figées dans le code : FileWheel exige l'empreinte SHA-256 publiée par GitHub pour chaque fichier téléchargé et refuse l'installation si elle manque ou ne correspond pas.
-- LibreOffice et Calibre s'installent via winget (Windows 10 récent / Windows 11) ; sans winget, installez-les à la main, FileWheel les détectera.
+- Engine hashes are not hard-coded: FileWheel requires the SHA-256 hash published by GitHub for each downloaded file and refuses to install if it is missing or does not match.
+- LibreOffice and Calibre are installed through winget (recent Windows 10 / Windows 11); without winget, install them manually and FileWheel will detect them.

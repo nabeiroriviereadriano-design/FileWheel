@@ -1,4 +1,4 @@
-name: Windows — compilation et installateur
+name: Windows build and installer
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # publication de l'installateur dans les Releases (tags v*)
+  contents: write   # publishes the installer to the Releases (v* tags)
 
 jobs:
   windows:
@@ -20,10 +20,10 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Compilation (vérification)
+      - name: Build (check)
         run: dotnet build src/FileWheel.App/FileWheel.App.csproj -c Release
 
-      - name: Publication autonome win-x64
+      - name: Self-contained win-x64 publish
         run: dotnet publish src/FileWheel.App/FileWheel.App.csproj -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=false -p:DebugType=None -p:DebugSymbols=false -o publish
 
       - name: NSIS
@@ -31,7 +31,7 @@ jobs:
         run: |
           if (-not (Test-Path "${env:ProgramFiles(x86)}\NSIS\makensis.exe")) { choco install nsis -y --no-progress }
 
-      - name: Installateur FileWheel-Setup
+      - name: FileWheel-Setup installer
         shell: pwsh
         run: |
           $v = ([xml](Get-Content Directory.Build.props -Raw)).SelectSingleNode('//Version').InnerText.Trim()
@@ -44,7 +44,7 @@ jobs:
           name: FileWheel-Setup
           path: FileWheel-Setup-*.exe
 
-      - name: Release (tags v*)
+      - name: Release (v* tags)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:

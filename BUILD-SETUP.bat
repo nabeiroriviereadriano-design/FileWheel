@@ -1,5 +1,5 @@
 @echo off
-rem Construit seulement FileWheel-Setup-<version>.exe (a copier ou partager), sans le lancer.
+rem Only builds FileWheel-Setup-<version>.exe (to copy or share), without running it.
 setlocal
 cd /d "%~dp0"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0installer\Build-Setup.ps1"
