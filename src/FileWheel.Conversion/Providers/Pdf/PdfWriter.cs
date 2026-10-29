@@ -15,7 +15,7 @@ public sealed class PdfWriter
 {
     private readonly List<byte[]> _objects = new();
     private readonly List<int> _pages = new();
-    private int _fontRegular = -1, _fontBold = -1, _fontMono = -1;
+    private int _fontRegular = -1, _fontMono = -1;
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
     public string Title { get; set; } = "";
