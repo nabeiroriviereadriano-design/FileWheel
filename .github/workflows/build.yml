@@ -5,6 +5,8 @@ on:
     branches: [main]
     tags: ['v*']
   pull_request:
+  release:
+    types: [published]   # a release created on GitHub (web or API) gets its installer attached
   workflow_dispatch:
 
 permissions:
@@ -49,4 +51,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: FileWheel-Setup-*.exe
-          generate_release_notes: true
+          generate_release_notes: ${{ github.event_name == 'push' }}

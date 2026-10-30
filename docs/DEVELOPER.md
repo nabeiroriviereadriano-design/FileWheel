@@ -92,7 +92,7 @@ The version comes from `Directory.Build.props`. The installer:
 Publishing a version:
 1. change `<Version>` in `Directory.Build.props` (and `AssemblyVersion` / `FileVersion`);
 2. update `docs/CHANGELOG.md`;
-3. `git tag v<version> && git push origin v<version>`: the workflow creates the GitHub Release with `FileWheel-Setup-<version>.exe`.
+3. `git tag v<version> && git push origin v<version>` (or create the release on GitHub: *Releases › Draft a new release*, new tag `v<version>`): the workflow builds `FileWheel-Setup-<version>.exe` and attaches it to the Release.
 
 Testing outside Windows: `makensis -DTARGET_AMD64 ...` produces a 64-bit variant that runs under Wine (`wine64 Setup.exe /S`).
 
