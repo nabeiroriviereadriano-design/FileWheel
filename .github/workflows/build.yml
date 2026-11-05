@@ -157,6 +157,7 @@ jobs:
         shell: pwsh
         run: |
           $v = '${{ steps.version.outputs.value }}'
+          New-Item -ItemType Directory -Force dist | Out-Null
           & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" /V2 "/DVERSION=$v" "/DPUBLISH_DIR=$PWD\publish" "/DOUTFILE=$PWD\dist\FileWheel-Setup-$v.exe" "/DICON=$PWD\assets\filewheel.ico" "/DSIDE_BITMAP=$PWD\assets\installer-side.bmp" installer\FileWheel.nsi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

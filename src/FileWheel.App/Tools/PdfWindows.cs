@@ -74,7 +74,8 @@ public sealed class PdfPagesWindow : ToolWindow
         Add(Ui.Ui.Spacer(6));
         Add(Ui.Ui.Button("Toutes sauf ces pages", () => Act("delete"), glyph: ""));
         Section("Pivoter ces pages");
-        Add(Ui.Ui.Row(Ui.Ui.Button("↻ 90°", () => Act("rotate1")), Ui.Ui.Button("↺ 90°", () => Act("rotate3")), Ui.Ui.Button("180°", () => Act("rotate2"))));
+        Add(Ui.Ui.Row(Ui.Ui.Button("90° à droite", () => Act("rotate1"), glyph: "\uE7AD"), Ui.Ui.Button("90° à gauche", () => Act("rotate3"), glyph: "\uE7A7")));
+        Add(Ui.Ui.Button("180°", () => Act("rotate2")));
         Add(Ui.Ui.Hint("Le PDF d'origine n'est jamais modifié."));
 
         for (int i = 1; i <= _count; i++) _grid.Children.Add(MakeTile(i));

@@ -8,3 +8,7 @@
 *.ico     binary
 *.png     binary
 *.bmp     binary
+
+# Fichiers texte de la version portable : lus sous Windows
+installer/portable/*.txt text eol=crlf
+installer/portable/FileWheel.portable text eol=crlf

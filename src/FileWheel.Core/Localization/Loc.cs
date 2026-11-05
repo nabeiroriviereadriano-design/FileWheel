@@ -178,6 +178,21 @@ public static class Loc
             if (core is not null) return m.Groups["pre"].Value + core + m.Groups["post"].Value;
         }
 
+        // Segments separes par « · » (lignes d'historique, details de fichier)
+        if (s.Contains(" · "))
+        {
+            var parts = MiddleDot.Split(s);
+            bool any = false;
+            for (int i = 0; i < parts.Length; i += 2)
+            {
+                var core = parts[i].Trim();
+                if (core.Length == 0) continue;
+                var t = TranslateCore(core, depth + 1);
+                if (t is not null) { parts[i] = parts[i].Replace(core, t); any = true; }
+            }
+            return any ? string.Concat(parts) : null;
+        }
+
         // Majuscule initiale differente : « copier » / « Copier »
         if (_exactInsensitive.TryGetValue(s, out var ci)) return MatchCase(s, ci);
 
@@ -228,6 +243,8 @@ public static class Loc
     private static readonly Regex Affix = new(
         @"^(?<pre>(?:[⚠✓✗•→←›»«\-–—]\s*|\d+\s*[.)]\s+)?)(?<core>.*?)(?<post>(?:\s*\(\d+\)|\s*…|\s*\.\.\.|\s*:|\s*\?|\s*!|\s*\.)*)$",
         RegexOptions.Singleline | RegexOptions.Compiled);
+
+    private static readonly Regex MiddleDot = new(@"(\s+·\s+)", RegexOptions.Compiled);
 
     // Coupe apres « . », « ! », « ? » ou « : » suivis d'un espace et d'une majuscule (le separateur reste avec la phrase precedente)
     private static readonly Regex SentenceSplit = new(@"(?<=[.!?:;])(?=\s+[A-ZÀÂÉÈÊÎÔÛÇ«(])", RegexOptions.Compiled);

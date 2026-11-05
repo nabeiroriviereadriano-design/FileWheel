@@ -169,7 +169,7 @@ public static class CaptureMode
             src.CopyPixels(px, src.PixelWidth * 4, 0);
             var text = await FileWheel.Windows.Ocr.OcrService.RecognizeAsync(px, src.PixelWidth, src.PixelHeight, null);
             Line("OCR : texte reconnu = " + text.Replace("\n", " | "));
-            if (!text.Contains("FileWheel", StringComparison.OrdinalIgnoreCase)) Fail("OCR", new Exception("« FileWheel » non reconnu"));
+            if (!text.Contains("drop it on the wheel", StringComparison.OrdinalIgnoreCase)) Fail("OCR", new Exception("texte de l'exemple non reconnu"));
         }
         catch (Exception ex) { Fail("OCR", ex); }
     }
@@ -229,7 +229,8 @@ public static class CaptureMode
         using (var dc = dv.RenderOpen())
         {
             if (background is not null) dc.DrawRectangle(background, null, new Rect(0, 0, w, h));
-            dc.DrawRectangle(new VisualBrush(e) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top }, null, new Rect(0, 0, w, h));
+            // Viewbox absolu : les marges vides en haut et a gauche sont gardees (sinon le contenu remonte)
+            dc.DrawRectangle(new VisualBrush(e) { Stretch = Stretch.Fill, ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, w, h) }, null, new Rect(0, 0, w, h));
         }
         rtb.Render(dv);
         rtb.Freeze();

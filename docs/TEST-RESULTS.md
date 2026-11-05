@@ -1,12 +1,12 @@
 # FileWheel — automated test results
 
-Run on 2026-10-29 22:06. Environment: Ubuntu 24.04.5 LTS, .NET 10.0.13. Engines: FFmpeg present, FFprobe present, ImageMagick present, 7-Zip present, PDFium present, LibreOffice present, Calibre (ebook-convert) present.
+Run on 2026-11-04 23:19. Environment: Ubuntu 24.04.5 LTS, .NET 10.0.13. Engines: FFmpeg, FFprobe, ImageMagick, 7-Zip, PDFium, LibreOffice, Calibre, AI background removal (IS-Net + ONNX Runtime for Linux) present.
 
 Test names are declared in French in the code (`tests/FileWheel.Tests`); this report is their English translation. Sample file names are kept as is (they deliberately contain accents and spaces).
 
-The Windows version is also compiled on a real Windows machine by GitHub Actions on every change.
+The Windows version is also built and started, and every window is opened (French and English) on a real Windows machine by GitHub Actions on every change.
 
-**204 passed, 0 failed, 10 not run** out of 214.
+**217 passed, 0 failed, 10 not run** out of 227.
 
 ## Wheel — trigger (mouse + keyboard)
 
@@ -297,6 +297,39 @@ The Windows version is also compiled on a real Windows machine by GitHub Actions
 | History: record, search, delete, disable | OK |  |
 | Format search: "WebP" | OK |  |
 | Cleanup of abandoned temporary files | OK |  |
+
+## PDF tools (merge, pages, rotation, compression)
+
+| Test | Result | Details |
+|---|---|---|
+| Merging two PDFs: pages added up, originals untouched | OK |  |
+| Extract pages: only the chosen pages, in order | OK |  |
+| Delete pages: never all of them, text of the others kept | OK |  |
+| Rotate: rotation saved (90°, then 180° added up) | OK |  |
+| Compress: images recompressed, text intact, lighter file | OK |  |
+| Compress a text PDF: nothing to gain, valid PDF | OK |  |
+| Page numbers: “1-3, 5” and back | OK |  |
+
+## AI background removal (IS-Net, ONNX Runtime)
+
+| Test | Result | Details |
+|---|---|---|
+| Mask identical to the rembg reference (same model) and subject cut out | OK |  |
+
+## Interface language (French / English)
+
+| Test | Result | Details |
+|---|---|---|
+| English dictionary: exact texts, patterns, uppercase, lines | OK |  |
+| Automatic language: French only if Windows is in French | OK |  |
+| The whole wheel is translated (labels, help, reasons, sectors) | OK |  |
+
+## Problem reports and updates
+
+| Test | Result | Details |
+|---|---|---|
+| Cleaned log: paths, file names and e-mails masked | OK |  |
+| GitHub release: version, installer, checksum, skipped versions | OK |  |
 
 ## Archives — creation, extraction, verification
 

@@ -55,3 +55,17 @@ Each milestone follows the same method: what was done, how it is verified, what 
 - Published on GitHub under the MIT license: https://github.com/nabeiroriviereadriano-design/FileWheel
 - **GitHub Actions** compiles the Windows version on a real Windows machine (`windows-latest`) and builds the installer on every change; a `v<version>` tag publishes `FileWheel-Setup-<version>.exe` in the Releases. First real Windows build of 0.2.0: success, 0 errors.
 - Documentation translated into English; test sample data anonymized; no third-party program or reference binary in the repository.
+
+## Version 0.3.0 — PDF tools, OCR, background removal, English interface, updates
+
+- **PDF tools** in the wheel (PDFium): merge (chosen order), compress (images recompressed as JPEG at the chosen resolution, text stays vector), pages (thumbnails, extract / delete / rotate a selection), rotate all pages. Tested with the real PDFium: page counts, kept text, rotation re-read, a photo PDF more than 30 % lighter.
+- **Text recognition (OCR)** with the engine built into Windows, for images and scanned PDFs: copy or save as .txt.
+- **AI background removal** ("Cutout"): IS-Net model run locally by ONNX Runtime through its C API (no NuGet package), optional engine with pinned URLs and SHA-256 checksums. The C# implementation is checked against a Python reference (same model, rembg preprocessing): more than 98 % of pixels agree.
+- **English interface** (automatic from the Windows language, or chosen in the settings), bilingual installer.
+- **In-app updates**: daily check of the GitHub Releases (can be turned off), notes, verified download, silent update and restart.
+- **Report a problem**: pre-filled GitHub issue with versions and a log excerpt cleaned of file names, paths and e-mails.
+- **Portable version** (zip) with its own uninstaller.
+- **Real Windows checks at each change**: startup test, every window and the wheel opened in French and English and saved as screenshots, OCR and background removal run, installer installed and uninstalled.
+- Code signing (SignPath) and winget publication prepared, enabled by repository secrets.
+- 13 new tests (217 passed in the Linux harness).
+

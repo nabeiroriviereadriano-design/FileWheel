@@ -133,8 +133,8 @@ public static class WheelMenuBuilder
         var pages = Leaf("pdf.pages", "Pages…", Glyphs.Pages, ActionIds.PdfPages, "Extraire, supprimer, pivoter");
         if (!single) { pages.Enabled = false; pages.DisabledReason = "Un seul fichier à la fois"; }
         pdf.Children.Add(pages);
-        pdf.Children.Add(new WheelItem { Id = "pdf.rotate.right", Label = "Pivoter à droite", Caption = "↻ 90°", Glyph = Glyphs.RotateRight, Command = ActionIds.PdfRotate, Argument = "1", Tooltip = "Toutes les pages" });
-        pdf.Children.Add(new WheelItem { Id = "pdf.rotate.left", Label = "Pivoter à gauche", Caption = "↺ 90°", Glyph = Glyphs.RotateLeft, Command = ActionIds.PdfRotate, Argument = "3", Tooltip = "Toutes les pages" });
+        pdf.Children.Add(new WheelItem { Id = "pdf.rotate.right", Label = "Pivoter à droite", Caption = "À DROITE", Glyph = Glyphs.RotateRight, Command = ActionIds.PdfRotate, Argument = "1", Tooltip = "Toutes les pages" });
+        pdf.Children.Add(new WheelItem { Id = "pdf.rotate.left", Label = "Pivoter à gauche", Caption = "À GAUCHE", Glyph = Glyphs.RotateLeft, Command = ActionIds.PdfRotate, Argument = "3", Tooltip = "Toutes les pages" });
         var ocr = Leaf("pdf.ocr", "Reconnaître le texte", Glyphs.TextRecognition, ActionIds.RecognizeText, "PDF scanné → texte (OCR)");
         if (!single) { ocr.Enabled = false; ocr.DisabledReason = "Un seul fichier à la fois"; }
         pdf.Children.Add(ocr);
