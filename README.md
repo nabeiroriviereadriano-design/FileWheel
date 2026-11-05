@@ -17,10 +17,15 @@ An action wheel that appears **while you drag a file** in Windows File Explorer 
 - Hybrid Windows 11 + macOS design, automatic light/dark mode ([docs/DESIGN.md](docs/DESIGN.md)).
 
 <p align="center">
-  <img src="docs/images/express-wheel-pdf.png" width="49%" alt="Express wheel on a PDF: PNG, TXT, DOCX, JPG in large type">
-  <img src="docs/images/express-wheel-image.png" width="49%" alt="Express wheel on an image: Crop, Background, Compress, Annotate, Info tools">
+  <img src="docs/images/express-wheel-pdf.png" width="32%" alt="Express wheel on a PDF: formats in large type">
+  <img src="docs/images/wheel-pdf-tools.png" width="32%" alt="PDF tools: merge, compress, pages, rotate, text">
+  <img src="docs/images/express-wheel-image.png" width="32%" alt="Express wheel on an image: crop, background, compress, annotate, info, cutout, text">
 </p>
-<p align="center"><sub>Rendering mockups faithful to the code (not Windows screenshots).</sub></p>
+<p align="center">
+  <img src="docs/images/tool-remove-background.png" width="49%" alt="Remove background (local AI)">
+  <img src="docs/images/tool-recognize-text.png" width="49%" alt="Recognize the text of a scanned PDF">
+</p>
+<p align="center"><sub>Real screenshots, taken automatically on Windows by GitHub Actions (more in the <a href="https://github.com/nabeiroriviereadriano-design/FileWheel/tree/ci-screenshots">ci-screenshots</a> branch).</sub></p>
 
 ## Download
 
