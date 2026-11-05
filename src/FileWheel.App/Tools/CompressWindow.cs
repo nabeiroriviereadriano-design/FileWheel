@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using FileWheel.Core.Localization;
 using FileWheel.App.Ui;
 using FileWheel.Core.Logging;
 
@@ -46,7 +47,7 @@ public sealed class CompressWindow : ToolWindow
 
         Section("Qualité (JPEG)");
         var qText = Ui.Ui.Text($"{_quality}");
-        var q = Ui.Ui.Slider(30, 95, _quality, v => { _quality = (int)v; qText.Text = $"{(int)v}"; Schedule(); }, 1);
+        var q = Ui.Ui.Slider(30, 95, _quality, v => { _quality = (int)v; qText.Text = Loc.T($"{(int)v}"); Schedule(); }, 1);
         Add(Ui.Ui.Row(q, qText));
 
         Section("Taille maximale");
@@ -61,7 +62,7 @@ public sealed class CompressWindow : ToolWindow
     {
         _debounce.Stop();
         _debounce.Start();
-        _estimate.Text = "Calcul…";
+        _estimate.Text = Loc.T("Calcul…");
     }
 
     private async Task EstimateAsync()
@@ -77,15 +78,15 @@ public sealed class CompressWindow : ToolWindow
         }
         catch (Exception ex)
         {
-            _estimate.Text = "Estimation impossible";
+            _estimate.Text = Loc.T("Estimation impossible");
             Log.Debug("Estimation de compression : " + ex.Message);
             return;
         }
         if (run != _estimateRun) return;
         double gain = 1 - (double)size / Math.Max(1, _first.Bytes);
-        _estimate.Text = $"{ImageIO.Size(_first.Bytes)} → {ImageIO.Size(size)}" + (gain > 0 ? $"  (−{gain:P0})" : "  (pas de gain)");
+        _estimate.Text = Loc.T($"{ImageIO.Size(_first.Bytes)} → {ImageIO.Size(size)}" + (gain > 0 ? $"  (−{gain:P0})" : "  (pas de gain)"));
         var fitted = ImageIO.Fit(src, max);
-        Status.Text = $"{fitted.PixelWidth} × {fitted.PixelHeight} px";
+        Status.Text = Loc.T($"{fitted.PixelWidth} × {fitted.PixelHeight} px");
     }
 
     private void Run()
@@ -95,7 +96,7 @@ public sealed class CompressWindow : ToolWindow
         var skipped = new List<string>();
         foreach (var f in _files)
         {
-            Status.Text = $"Compression de {Path.GetFileName(f)}…";
+            Status.Text = Loc.T($"Compression de {Path.GetFileName(f)}…");
             Dispatcher.Invoke(() => { }, DispatcherPriority.Background); // laisse l'interface se redessiner
             ImageIO.Loaded img;
             try { img = f == _first.Path ? _first : ImageIO.Load(f); }

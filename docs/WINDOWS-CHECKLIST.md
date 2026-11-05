@@ -35,6 +35,15 @@ To run through after `INSTALL.bat` (or with `FileWheel-Setup-<version>.exe` down
 - [ ] Crop (aspect ratios, rotation), Background (gradient, padding, corners, shadow), Compress (estimated size), Annotate (arrow, text, redact, blur, Ctrl+Z), Info (GPS flagged, copy without metadata).
 - [ ] In the center of the wheel: file size and name at rest.
 
+## New in 0.3.0
+- [ ] PDF › Merge (two PDFs, order changed), Compress (a PDF with photos gets lighter, text still selectable), Pages… (extract, delete, rotate a selection), Rotate right / left.
+- [ ] Image › Text and PDF › Recognize text: text shown, Copy, Save as .txt.
+- [ ] Image › Cutout: first use offers the download (model + ONNX Runtime, and Visual C++ if missing); result with transparent / white / black background.
+- [ ] Settings › General › Interface language: English, then Restart FileWheel → the whole interface, the wheel and the notifications are in English; back to French.
+- [ ] Settings › About › Check now (with an older version installed: notification, Update, FileWheel restarts in the new version).
+- [ ] Report a problem: the log excerpt shows no file name; Open on GitHub opens a pre-filled issue.
+- [ ] Portable zip: run from a USB stick, FileWheel-data created next to the exe, UNINSTALL-PORTABLE.bat removes everything.
+
 ## Conversion
 - [ ] PNG image → JPEG through the wheel (Windows codecs, no engine).
 - [ ] *Paramètres › Moteurs* › install FFmpeg: the consent dialog shows source, version, size; installation verifies the hash.

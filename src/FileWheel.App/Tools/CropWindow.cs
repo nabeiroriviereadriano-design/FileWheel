@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using FileWheel.Core.Localization;
 using FileWheel.App.Ui;
 using FileWheel.Core.Wheel;
 
@@ -133,8 +134,8 @@ public sealed class CropWindow : ToolWindow
             Canvas.SetLeft(_handles[i], pts[i].X - hs / 2);
             Canvas.SetTop(_handles[i], pts[i].Y - hs / 2);
         }
-        _sizeText.Text = $"{(int)Math.Round(_crop.Width)} × {(int)Math.Round(_crop.Height)} px";
-        Status.Text = $"Original : {_src.Bitmap.PixelWidth} × {_src.Bitmap.PixelHeight} px · {ImageIO.Size(_src.Bytes)}";
+        _sizeText.Text = Loc.T($"{(int)Math.Round(_crop.Width)} × {(int)Math.Round(_crop.Height)} px");
+        Status.Text = Loc.T($"Original : {_src.Bitmap.PixelWidth} × {_src.Bitmap.PixelHeight} px · {ImageIO.Size(_src.Bytes)}");
     }
 
     private static void Set(Line l, double x1, double y1, double x2, double y2, double k)
@@ -223,7 +224,7 @@ public sealed class CropWindow : ToolWindow
         var r = new Int32Rect((int)Math.Round(_crop.X), (int)Math.Round(_crop.Y), (int)Math.Round(_crop.Width), (int)Math.Round(_crop.Height));
         r.Width = Math.Min(r.Width, _work.PixelWidth - r.X);
         r.Height = Math.Min(r.Height, _work.PixelHeight - r.Y);
-        if (r.Width < 1 || r.Height < 1) { Status.Text = "Cadre vide."; return; }
+        if (r.Width < 1 || r.Height < 1) { Status.Text = Loc.T("Cadre vide."); return; }
         var cropped = new CroppedBitmap(_work, r);
         var ext = ImageIO.OutputExtension(_src.Path);
         var data = ImageIO.Encode(cropped, ext, 95);

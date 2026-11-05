@@ -12,5 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="make_samples.py" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="bg_reference.py" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

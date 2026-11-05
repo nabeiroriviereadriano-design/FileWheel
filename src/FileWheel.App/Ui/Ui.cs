@@ -1,8 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Interop;
 using System.Windows.Media;
+using FileWheel.Core.Localization;
 using FileWheel.Windows.SystemIntegration;
 
 namespace FileWheel.App.Ui;
@@ -18,6 +20,9 @@ public static class Ui
     public static readonly FontFamily TextFont = new("Segoe UI Variable Text, Segoe UI");
 
     public static bool Dark => WindowsTheme.AppsUseDarkTheme();
+
+    /// <summary>Mode de verification automatique (captures) : aucune boite de message bloquante, tout va au journal.</summary>
+    public static bool Headless { get; set; }
 
     public static Brush Accent => Res(Theme.Accent, Color.FromRgb(0, 103, 192));
     public static Brush Subtle => Res(Theme.TextSecondary, Color.FromRgb(110, 110, 115));
@@ -35,24 +40,24 @@ public static class Ui
     /// <summary>Grand titre de page (facon macOS), police d'affichage Windows.</summary>
     public static TextBlock Title(string text) => Themed(new TextBlock
     {
-        Text = text, FontSize = 26, FontWeight = FontWeights.SemiBold, FontFamily = Theme.DisplayFont, Margin = new Thickness(0, 0, 0, 12), TextWrapping = TextWrapping.Wrap,
+        Text = Loc.T(text), FontSize = 26, FontWeight = FontWeights.SemiBold, FontFamily = Theme.DisplayFont, Margin = new Thickness(0, 0, 0, 12), TextWrapping = TextWrapping.Wrap,
     });
 
     /// <summary>En-tete de groupe : petit, gras, couleur secondaire (comme les sections des reglages macOS / Windows 11).</summary>
     public static TextBlock Heading(string text) => Themed(new TextBlock
     {
-        Text = text, FontSize = 13, FontWeight = FontWeights.SemiBold, Margin = new Thickness(2, 18, 0, 6), TextWrapping = TextWrapping.Wrap,
+        Text = Loc.T(text), FontSize = 13, FontWeight = FontWeights.SemiBold, Margin = new Thickness(2, 18, 0, 6), TextWrapping = TextWrapping.Wrap,
     }, Theme.TextSecondary);
 
     public static TextBlock Text(string text, Brush? brush = null, double size = 13)
     {
-        var t = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, FontSize = size, Margin = new Thickness(0, 2, 0, 2) };
+        var t = new TextBlock { Text = Loc.T(text), TextWrapping = TextWrapping.Wrap, FontSize = size, Margin = new Thickness(0, 2, 0, 2) };
         if (brush is not null) t.Foreground = brush;
         else t.SetResourceReference(TextBlock.ForegroundProperty, Theme.TextPrimary);
         return t;
     }
 
-    public static TextBlock Hint(string text) => Themed(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, FontSize = 12, Margin = new Thickness(0, 2, 0, 6) }, Theme.TextSecondary);
+    public static TextBlock Hint(string text) => Themed(new TextBlock { Text = Loc.T(text), TextWrapping = TextWrapping.Wrap, FontSize = 12, Margin = new Thickness(0, 2, 0, 6) }, Theme.TextSecondary);
 
     private static TextBlock Themed(TextBlock t, string key = Theme.TextPrimary)
     {
@@ -69,6 +74,7 @@ public static class Ui
 
     public static Button Button(string text, Action onClick, bool accent = false, string? glyph = null, bool danger = false)
     {
+        text = Loc.T(text);
         object content = text;
         if (glyph is not null)
         {
@@ -111,8 +117,8 @@ public static class Ui
         var g = new Grid { Margin = new Thickness(0, 4, 0, 4) };
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(labelWidth) });
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        var lbl = new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 12, 0) };
-        if (help is not null) lbl.ToolTip = help;
+        var lbl = new TextBlock { Text = Loc.T(label), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 12, 0) };
+        if (help is not null) lbl.ToolTip = Loc.T(help);
         g.Children.Add(lbl);
         Grid.SetColumn(control, 1);
         g.Children.Add(control);
@@ -156,7 +162,7 @@ public static class Ui
         group ??= "seg" + Guid.NewGuid().ToString("N"); // meme nom = choix exclusif entre plusieurs rangees
         foreach (var (v, l) in items)
         {
-            var rb = new RadioButton { Content = l, GroupName = group, IsChecked = Equals(v, selected), Tag = v };
+            var rb = new RadioButton { Content = Loc.T(l), GroupName = group, IsChecked = Equals(v, selected), Tag = v };
             if (Application.Current?.TryFindResource(Theme.SegmentStyle) is Style st) rb.Style = st;
             rb.Checked += (_, _) => changed(v);
             panel.Children.Add(rb);
@@ -174,7 +180,7 @@ public static class Ui
     public static CheckBox Check(string text, bool value, Action<bool> changed, string? tooltip = null)
     {
         // Rendu en interrupteur a bascule (style implicite de Theme) : libelle a gauche, bascule a droite.
-        var c = new CheckBox { Content = text, IsChecked = value, Margin = new Thickness(0, 2, 0, 2), ToolTip = tooltip };
+        var c = new CheckBox { Content = Loc.T(text), IsChecked = value, Margin = new Thickness(0, 2, 0, 2), ToolTip = tooltip is null ? null : Loc.T(tooltip) };
         c.Checked += (_, _) => changed(true);
         c.Unchecked += (_, _) => changed(false);
         return c;
@@ -183,7 +189,7 @@ public static class Ui
     public static ComboBox Combo<T>(IEnumerable<(T value, string label)> items, T selected, Action<T> changed, double minWidth = 220)
     {
         var cb = new ComboBox { MinWidth = minWidth, HorizontalAlignment = HorizontalAlignment.Left };
-        foreach (var (v, l) in items) cb.Items.Add(new ComboBoxItem { Content = l, Tag = v });
+        foreach (var (v, l) in items) cb.Items.Add(new ComboBoxItem { Content = Loc.T(l), Tag = v });
         foreach (ComboBoxItem it in cb.Items) if (Equals(it.Tag, selected)) cb.SelectedItem = it;
         if (cb.SelectedIndex < 0 && cb.Items.Count > 0) cb.SelectedIndex = 0;
         cb.SelectionChanged += (_, _) => { if (cb.SelectedItem is ComboBoxItem { Tag: T v }) changed(v); };
@@ -211,6 +217,12 @@ public static class Ui
             WindowsTheme.StyleWindow(h, Theme.IsDark, mica: false);
         };
         w.UseLayoutRounding = true;
+        // Textes poses directement dans la fenetre (sans passer par ces constructeurs) : traduits a l'affichage
+        if (Loc.English)
+        {
+            w.Title = Loc.T(w.Title);
+            w.Loaded += (_, _) => { w.Title = Loc.T(w.Title); Translate(w); };
+        }
         if (System.IO.File.Exists(AppIconPath))
         {
             // BitmapFrame garde toutes les tailles de l'icone : Windows choisit la bonne (barre de titre, Alt+Tab...).
@@ -226,10 +238,51 @@ public static class Ui
     public static MessageBoxResult Message(string text, string title = "FileWheel", MessageBoxButton buttons = MessageBoxButton.OK,
         MessageBoxImage image = MessageBoxImage.Information, MessageBoxResult def = MessageBoxResult.OK, Window? owner = null)
     {
+        text = Loc.T(text);
+        title = Loc.T(title);
+        if (Headless) { FileWheel.Core.Logging.Log.Warn($"[message] {title} : {text}"); return def; }
         owner ??= Application.Current?.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive);
         return owner is not null
             ? MessageBox.Show(owner, text, title, buttons, image, def)
             : MessageBox.Show(text, title, buttons, image, def, MessageBoxOptions.None);
+    }
+
+    /// <summary>Espace vertical fixe.</summary>
+    public static FrameworkElement Spacer(double height) => new Border { Height = height };
+
+    /// <summary>
+    /// Traduit les textes encore en francais d'un arbre d'elements (TextBlock, contenus texte, en-tetes, info-bulles).
+    /// Les champs de saisie (TextBox) ne sont jamais touches : ce sont les donnees de l'utilisateur.
+    /// </summary>
+    public static void Translate(DependencyObject root)
+    {
+        if (!Loc.English) return;
+        var stack = new Stack<DependencyObject>();
+        var seen = new HashSet<DependencyObject>();
+        stack.Push(root);
+        while (stack.Count > 0)
+        {
+            var d = stack.Pop();
+            if (!seen.Add(d)) continue;
+            switch (d)
+            {
+                case TextBox or PasswordBox: continue;
+                case TextBlock tb when tb.Inlines.Count <= 1 && !string.IsNullOrEmpty(tb.Text) && !BindingOperations.IsDataBound(tb, TextBlock.TextProperty):
+                    var t = Loc.T(tb.Text);
+                    if (!ReferenceEquals(t, tb.Text) && t != tb.Text) tb.Text = t;
+                    break;
+                case HeaderedContentControl { Header: string h } hc: hc.Header = Loc.T(h); break;
+                case HeaderedItemsControl { Header: string hi } hic: hic.Header = Loc.T(hi); break;
+            }
+            if (d is ContentControl { Content: string c } cc) cc.Content = Loc.T(c);
+            if (d is FrameworkElement { ToolTip: string tip } fe) fe.ToolTip = Loc.T(tip);
+            foreach (var child in LogicalTreeHelper.GetChildren(d).OfType<DependencyObject>()) stack.Push(child);
+            if (d is Visual or System.Windows.Media.Media3D.Visual3D)
+            {
+                int n = VisualTreeHelper.GetChildrenCount(d);
+                for (int i = 0; i < n; i++) stack.Push(VisualTreeHelper.GetChild(d, i));
+            }
+        }
     }
 
     public static string Size(long bytes) => FileWheel.Core.FileOperations.SafeFileOps.FormatSize(bytes);

@@ -9,6 +9,7 @@ using FileWheel.Conversion.Engines;
 using FileWheel.Core.Actions;
 using FileWheel.Core.Formats;
 using FileWheel.Core.Input;
+using FileWheel.Core.Localization;
 using FileWheel.Core.Logging;
 using FileWheel.Core.Settings;
 using FileWheel.Core.Util;
@@ -181,6 +182,18 @@ public sealed class SettingsWindow : Window
             try { Startup.Set(v); _s.StartWithWindows = v; Changed(); }
             catch (Exception ex) { Ui.Message("Impossible de modifier le démarrage automatique : " + ex.Message, image: MessageBoxImage.Warning, owner: this); }
         }, "Ajoute FileWheel aux programmes lancés à l'ouverture de session (sans droits administrateur)."));
+        p.Children.Add(Ui.Heading("Langue"));
+        var restart = Ui.Button("Redémarrer FileWheel", () => (Application.Current as FileWheelApp)?.Restart(), glyph: Glyphs.Update);
+        restart.Visibility = Visibility.Collapsed;
+        p.Children.Add(Ui.Field("Langue de l'interface", Ui.Segmented<UiLanguage>(
+            [(UiLanguage.Auto, "Automatique"), (UiLanguage.French, "Français"), (UiLanguage.English, "English")], _s.Language, v =>
+            {
+                _s.Language = v;
+                Changed();
+                restart.Visibility = Loc.IsEnglishFor(v) != Loc.English ? Visibility.Visible : Visibility.Collapsed;
+            })));
+        p.Children.Add(Ui.Hint("Automatique : la langue de Windows (français si Windows est en français, anglais sinon). Le changement s'applique au redémarrage de FileWheel."));
+        p.Children.Add(restart);
         p.Children.Add(Ui.Heading("Journal"));
         p.Children.Add(Ui.Field("Niveau de détail", Ui.Combo([(LogLevel.Info, "Normal"), (LogLevel.Debug, "Détaillé (diagnostic)")], Log.MinimumLevel, v => Log.MinimumLevel = v)));
         p.Children.Add(Ui.Hint("Le journal ne contient ni le contenu des fichiers ni votre nom d'utilisateur (le dossier du profil est masqué)."));
@@ -198,7 +211,7 @@ public sealed class SettingsWindow : Window
         var p = Ui.Column(Ui.Title("Déclenchement de la roue"));
         p.Children.Add(Ui.Text("Commencez à faire glisser un fichier, puis maintenez la combinaison choisie."));
         var warn = Ui.Text("", Ui.Warning, 12);
-        void UpdateWarn() => warn.Text = string.Join("\n", t.Chord.Warnings());
+        void UpdateWarn() => warn.Text = string.Join("\n", t.Chord.Warnings().Select(Loc.T));
         var ctrl = Ui.Check("Ctrl", t.Ctrl, v => { t.Ctrl = v; UpdateWarn(); Changed(); });
         var alt = Ui.Check("Alt", t.Alt, v => { t.Alt = v; UpdateWarn(); Changed(); });
         var shift = Ui.Check("Maj", t.Shift, v => { t.Shift = v; UpdateWarn(); Changed(); });
@@ -215,9 +228,9 @@ public sealed class SettingsWindow : Window
 
         p.Children.Add(Ui.Heading("Sensibilité"));
         var delayText = Ui.Text($"{t.DelayMs} ms");
-        p.Children.Add(Ui.Field("Délai d'apparition", Ui.Row(Ui.Slider(0, 1000, t.DelayMs, v => { t.DelayMs = (int)v; delayText.Text = $"{(int)v} ms"; Changed(); }, 10), delayText)));
+        p.Children.Add(Ui.Field("Délai d'apparition", Ui.Row(Ui.Slider(0, 1000, t.DelayMs, v => { t.DelayMs = (int)v; delayText.Text = Loc.T($"{(int)v} ms"); Changed(); }, 10), delayText)));
         var distText = Ui.Text($"{t.MinDistancePx} px");
-        p.Children.Add(Ui.Field("Distance minimale de glisser", Ui.Row(Ui.Slider(2, 100, t.MinDistancePx, v => { t.MinDistancePx = (int)v; distText.Text = $"{(int)v} px"; Changed(); }), distText)));
+        p.Children.Add(Ui.Field("Distance minimale de glisser", Ui.Row(Ui.Slider(2, 100, t.MinDistancePx, v => { t.MinDistancePx = (int)v; distText.Text = Loc.T($"{(int)v} px"); Changed(); }), distText)));
         p.Children.Add(Ui.Field("Vérification de l'élément", Ui.Segmented(
             [(ItemCheckPolicy.Lenient, "Tolérante"), (ItemCheckPolicy.Strict, "Stricte"), (ItemCheckPolicy.None, "Désactivée")],
             t.ItemCheck, v => { t.ItemCheck = v; Changed(); }),
@@ -245,18 +258,18 @@ public sealed class SettingsWindow : Window
         p.Children.Add(Ui.Check("Libellés sous les icônes", w.ShowCaptions, v => { w.ShowCaptions = v; Changed(); }));
         p.Children.Add(Ui.Heading("Taille et position"));
         var sizeText = Ui.Text($"{w.DiameterDip} px");
-        p.Children.Add(Ui.Field("Taille", Ui.Row(Ui.Slider(200, 600, w.DiameterDip, v => { w.DiameterDip = (int)v; sizeText.Text = $"{(int)v} px"; Changed(); }, 10), sizeText)));
+        p.Children.Add(Ui.Field("Taille", Ui.Row(Ui.Slider(200, 600, w.DiameterDip, v => { w.DiameterDip = (int)v; sizeText.Text = Loc.T($"{(int)v} px"); Changed(); }, 10), sizeText)));
         var ox = Ui.Text($"{w.OffsetXDip}");
-        p.Children.Add(Ui.Field("Décalage horizontal", Ui.Row(Ui.Slider(-300, 300, w.OffsetXDip, v => { w.OffsetXDip = (int)v; ox.Text = $"{(int)v}"; Changed(); }, 5), ox)));
+        p.Children.Add(Ui.Field("Décalage horizontal", Ui.Row(Ui.Slider(-300, 300, w.OffsetXDip, v => { w.OffsetXDip = (int)v; ox.Text = Loc.T($"{(int)v}"); Changed(); }, 5), ox)));
         var oy = Ui.Text($"{w.OffsetYDip}");
-        p.Children.Add(Ui.Field("Décalage vertical", Ui.Row(Ui.Slider(-300, 300, w.OffsetYDip, v => { w.OffsetYDip = (int)v; oy.Text = $"{(int)v}"; Changed(); }, 5), oy)));
+        p.Children.Add(Ui.Field("Décalage vertical", Ui.Row(Ui.Slider(-300, 300, w.OffsetYDip, v => { w.OffsetYDip = (int)v; oy.Text = Loc.T($"{(int)v}"); Changed(); }, 5), oy)));
         var op = Ui.Text($"{w.Opacity:P0}");
         p.Children.Add(Ui.Field("Opacité du fond", Ui.Row(Ui.Slider(0.55, 1, w.Opacity, v => { w.Opacity = v; op.Text = $"{v:P0}"; Changed(); }, 0.05), op)));
         p.Children.Add(Ui.Check("Verre dépoli (flou de l'arrière-plan) — expérimental", w.Blur, v => { w.Blur = v; Changed(); },
             "Utilise le flou de Windows 10/11. Si l'effet s'affiche mal sur votre configuration, désactivez-le : la roue reste lisible avec son fond semi-opaque."));
         p.Children.Add(Ui.Check("Animations", w.Animations, v => { w.Animations = v; Changed(); }));
         var dw = Ui.Text($"{w.SubmenuDwellMs} ms");
-        p.Children.Add(Ui.Field("Ouverture des sous-menus au survol", Ui.Row(Ui.Slider(150, 1500, w.SubmenuDwellMs, v => { w.SubmenuDwellMs = (int)v; dw.Text = $"{(int)v} ms"; Changed(); }, 10), dw)));
+        p.Children.Add(Ui.Field("Ouverture des sous-menus au survol", Ui.Row(Ui.Slider(150, 1500, w.SubmenuDwellMs, v => { w.SubmenuDwellMs = (int)v; dw.Text = Loc.T($"{(int)v} ms"); Changed(); }, 10), dw)));
         p.Children.Add(Ui.Check("Demander confirmation avant de placer dans la Corbeille", w.ConfirmRecycle, v => { w.ConfirmRecycle = v; Changed(); }));
         p.Children.Add(Ui.Hint("La suppression définitive demande toujours une confirmation explicite (bouton par défaut : Annuler)."));
         return p;
@@ -327,10 +340,12 @@ public sealed class SettingsWindow : Window
             if (deps.InstalledInfo(def.Id) is { } inst && st.Source == EngineSource.FileWheel) where += $" — version {inst.Version}";
             col.Children.Add(Ui.Text(where, Ui.Subtle, 12));
             col.Children.Add(Ui.Hint("Licence : " + def.License));
+            foreach (var req in def.Requires.Where(r => !deps.IsAvailable(r)))
+                col.Children.Add(Ui.Text($"Nécessite aussi : {EngineCatalog.Get(req).Name} (proposé pendant l'installation).", Ui.Warning, 12));
             var row = Ui.Row();
-            if (def.Method == InstallMethod.GitHubRelease && st.Source != EngineSource.UserPath)
+            if (def.Method is InstallMethod.GitHubRelease or InstallMethod.Pinned && st.Source != EngineSource.UserPath && (OperatingSystem.IsWindows() || def.Method == InstallMethod.GitHubRelease))
                 row.Children.Add(Ui.Button(st.Source == EngineSource.FileWheel ? "Mettre à jour" : "Installer", () => InstallGitHub(def), accent: !st.Available));
-            if (def.WingetId is not null && !st.Available && def.Method != InstallMethod.GitHubRelease)
+            if (def.WingetId is not null && !st.Available && def.Method == InstallMethod.Winget)
                 row.Children.Add(Ui.Button("Installer avec winget", () => InstallWinget(def), accent: true));
             row.Children.Add(Ui.Button("Choisir l'emplacement…", () =>
             {
@@ -370,45 +385,13 @@ public sealed class SettingsWindow : Window
 
     private async void InstallGitHub(EngineDefinition def)
     {
-        InstallOffer offer;
-        try { offer = await _engine.Dependencies.PrepareGitHubInstallAsync(def.Id, CancellationToken.None); }
-        catch (Exception ex) { Ui.Message(ConversionManager.Translate(ex).Message, image: MessageBoxImage.Warning, owner: this); return; }
-        if (!new EngineConsentDialog(offer).Run()) return;
-        var progress = new ProgressDialog($"Installation de {def.Name}");
-        progress.Show();
-        try
-        {
-            if (def.Id == EngineIds.ImageMagick && offer.AssetName.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) && !_engine.Dependencies.IsAvailable(EngineIds.SevenZip))
-                throw new ConversionException(ConversionErrorKind.EngineMissing, "Ce paquet ImageMagick est au format 7Z : installez d'abord le moteur 7-Zip (même page).");
-            await _engine.Dependencies.InstallAsync(offer, new Progress<ConversionProgress>(pr => progress.Update(pr.Fraction, pr.Stage)), progress.Token);
-            progress.Close();
-            Ui.Message($"{def.Name} est installé.", owner: this);
-        }
-        catch (OperationCanceledException) { progress.Close(); }
-        catch (Exception ex)
-        {
-            progress.Close();
-            Ui.Message("Installation impossible : " + ConversionManager.Translate(ex).Message, image: MessageBoxImage.Error, owner: this);
-        }
+        await EngineInstaller.InstallAsync(def, _engine.Dependencies, this);
         RenderEngines();
     }
 
     private async void InstallWinget(EngineDefinition def)
     {
-        if (!ConfirmDialog.Ask($"Installer {def.Name}", $"{def.Name} sera installé par winget (gestionnaire de paquets de Windows), depuis la source officielle « winget ». Une fenêtre d'installation ou une demande d'autorisation Windows peut apparaître.\n\nLicence : {def.License}", "Installer"))
-            return;
-        var winget = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WindowsApps", "winget.exe");
-        if (!File.Exists(winget)) { Ui.Message("winget est introuvable sur ce PC. Installez « App Installer » depuis le Microsoft Store, ou installez le logiciel depuis son site officiel puis indiquez son emplacement.", image: MessageBoxImage.Warning, owner: this); return; }
-        var progress = new ProgressDialog($"Installation de {def.Name} (winget)");
-        progress.Show();
-        try
-        {
-            var r = await ProcessRunner.RunAsync(winget, DependencyManager.WingetArguments(def), progress.Token, timeout: TimeSpan.FromMinutes(30));
-            progress.Close();
-            _engine.Dependencies.Refresh();
-            Ui.Message(_engine.Dependencies.IsAvailable(def.Id) ? $"{def.Name} est installé." : $"winget a terminé (code {r.ExitCode}) mais {def.Name} n'a pas été trouvé. Indiquez son emplacement manuellement.", owner: this);
-        }
-        catch (Exception ex) { progress.Close(); Ui.Message(ConversionManager.Translate(ex).Message, image: MessageBoxImage.Error, owner: this); }
+        await EngineInstaller.InstallAsync(def, _engine.Dependencies, this);
         RenderEngines();
     }
 
@@ -527,7 +510,7 @@ public sealed class SettingsWindow : Window
         var p = Ui.Column(Ui.Title("À propos de FileWheel"));
         var v = typeof(SettingsWindow).Assembly.GetName().Version;
         p.Children.Add(Ui.Text($"FileWheel {v?.ToString(3)} — roue d'actions et convertisseur de fichiers pour Windows 10 et 11."));
-        p.Children.Add(Ui.Text("Code de FileWheel : licence MIT. Aucune publicité, aucune télémétrie, aucun envoi de fichier sur Internet : toutes les conversions sont locales."));
+        p.Children.Add(Ui.Text("Code de FileWheel : licence MIT. Aucune publicité, aucune télémétrie, aucun envoi de fichier sur Internet : toutes les conversions sont locales. Seule la recherche de mises à jour (désactivable) consulte GitHub."));
         p.Children.Add(Ui.Heading("Moteurs externes (facultatifs) et licences"));
         foreach (var e in EngineCatalog.All.Where(e => e.Id != EngineIds.FFprobe))
             p.Children.Add(Ui.Text($"• {e.Name} : {e.License}", null, 12));
@@ -535,6 +518,20 @@ public sealed class SettingsWindow : Window
         var docs = Path.Combine(AppContext.BaseDirectory, "docs");
         if (Directory.Exists(docs)) p.Children.Add(Ui.Button("Ouvrir la documentation", () => Process.Start("explorer.exe", docs), glyph: Glyphs.Book));
         p.Children.Add(Ui.Hint("Journal du jour : " + Log.Redact(Log.CurrentLogFile)));
+
+        p.Children.Add(Ui.Heading("Mises à jour"));
+        p.Children.Add(Ui.Check("Me prévenir quand une nouvelle version est disponible", _s.Updates.CheckAutomatically, v => { _s.Updates.CheckAutomatically = v; Changed(); },
+            "Une fois par jour, FileWheel lit la page des versions du dépôt GitHub officiel. Aucun fichier ni information personnelle n'est envoyé."));
+        if (AppPaths.IsPortable) p.Children.Add(Ui.Hint("Version portable : la mise à jour se fait en téléchargeant la nouvelle archive."));
+        p.Children.Add(Ui.Row(
+            Ui.Button("Rechercher maintenant", () => { if (Application.Current is FileWheelApp app) _ = app.CheckForUpdatesAsync(manual: true); }, glyph: Glyphs.Update),
+            Ui.Button("Page des versions", () => UpdateDialog.Open(FileWheel.Conversion.Updates.Updater.ReleasesPage), glyph: Glyphs.Link)));
+
+        p.Children.Add(Ui.Heading("Aide et signalement"));
+        p.Children.Add(Ui.Text("Un problème, une idée ? Le rapport s'ouvre sur GitHub, avec la version de FileWheel et de Windows et, si vous le voulez, la fin du journal nettoyée de vos noms de fichiers."));
+        p.Children.Add(Ui.Row(
+            Ui.Button("Signaler un problème…", () => new ReportProblemDialog().Run(), glyph: Glyphs.Bug),
+            Ui.Button("Code source", () => UpdateDialog.Open($"https://github.com/{FileWheel.Conversion.Updates.Updater.Repository}"), glyph: Glyphs.Link)));
         return p;
     }
 }
@@ -564,7 +561,7 @@ public sealed class ProgressDialog : Window
     {
         Dispatcher.BeginInvoke(() =>
         {
-            _stage.Text = stage;
+            _stage.Text = Loc.T(stage);
             _bar.IsIndeterminate = fraction is null;
             if (fraction is { } f) _bar.Value = f;
         });

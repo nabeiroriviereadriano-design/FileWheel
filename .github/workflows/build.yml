@@ -6,15 +6,22 @@ on:
     tags: ['v*']
   pull_request:
   release:
-    types: [published]   # a release created on GitHub (web or API) gets its installer attached
+    types: [published]   # a release created on GitHub (web or API) gets its files attached
   workflow_dispatch:
 
 permissions:
-  contents: write   # publishes the installer to the Releases (v* tags)
+  contents: write   # publishes release files and the ci-screenshots branch
+
+env:
+  DOTNET_NOLOGO: '1'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
 
 jobs:
   windows:
     runs-on: windows-latest
+    env:
+      SIGNPATH_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+      WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -22,11 +29,124 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $v = ([xml](Get-Content Directory.Build.props -Raw)).SelectSingleNode('//Version').InnerText.Trim()
+          "value=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "FileWheel $v"
+
       - name: Build (check)
         run: dotnet build src/FileWheel.App/FileWheel.App.csproj -c Release
 
       - name: Self-contained win-x64 publish
         run: dotnet publish src/FileWheel.App/FileWheel.App.csproj -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=false -p:DebugType=None -p:DebugSymbols=false -o publish
+
+      # ------------------------------------------------------------------ real Windows checks
+
+      - name: Optional engines for the checks (PDFium, background removal)
+        uses: actions/cache@v4
+        with:
+          path: ci-engines
+          key: ci-engines-pdfium-isnet-ort-1.31.1
+
+      - name: Download optional engines (verified)
+        shell: pwsh
+        run: |
+          $e = "ci-engines"; New-Item -ItemType Directory -Force $e | Out-Null
+          function Get-Verified($url, $file, $sha) {
+            if ((Test-Path $file) -and ((Get-FileHash $file -Algorithm SHA256).Hash -eq $sha)) { return }
+            Invoke-WebRequest $url -OutFile $file
+            if ($sha -and (Get-FileHash $file -Algorithm SHA256).Hash -ne $sha) { throw "SHA-256 mismatch: $file" }
+          }
+          if (-not (Test-Path "$e\pdfium.dll")) {
+            Invoke-WebRequest https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-x64.tgz -OutFile pdfium.tgz
+            tar -xzf pdfium.tgz -C $e bin/pdfium.dll; Move-Item "$e\bin\pdfium.dll" "$e\pdfium.dll" -Force
+          }
+          Get-Verified https://github.com/danielgatis/rembg/releases/download/v0.0.0/isnet-general-use.onnx "$e\isnet-general-use.onnx" '60920E99C45464F2BA57BEE2AD08C919A52BBF852739E96947FBB4358C0D964A'
+          if (-not (Test-Path "$e\onnxruntime.dll")) {
+            Get-Verified https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-win-x64-1.31.1.zip ort.zip '5869E26BB25314375F2D5EF1877E3EA06B1543D6C710E6E4A1EC2F7177AB4B2C'
+            tar -xf ort.zip onnxruntime-win-x64-1.31.1/lib/onnxruntime.dll
+            Move-Item onnxruntime-win-x64-1.31.1/lib/onnxruntime.dll "$e\onnxruntime.dll" -Force
+          }
+          Get-ChildItem $e | Format-Table Name, Length
+
+      - name: Startup smoke test (start, stay alive, quit cleanly)
+        shell: pwsh
+        run: |
+          $env:FILEWHEEL_HOME = "$env:RUNNER_TEMP\fw-smoke"
+          New-Item -ItemType Directory -Force "$env:FILEWHEEL_HOME\config" | Out-Null
+          '{ "language": "French", "updates": { "checkAutomatically": false }, "startWithWindows": false }' | Set-Content "$env:FILEWHEEL_HOME\config\settings.json"
+          $p = Start-Process publish\FileWheel.exe -ArgumentList '--arriere-plan' -PassThru
+          Start-Sleep -Seconds 10
+          if ($p.HasExited) { throw "FileWheel exited during startup (code $($p.ExitCode))" }
+          Start-Process publish\FileWheel.exe -ArgumentList '--quitter' -Wait
+          if (-not $p.WaitForExit(20000)) { $p.Kill(); throw "FileWheel did not quit" }
+          $log = Get-ChildItem "$env:FILEWHEEL_HOME\data\logs\*.log" | Get-Content
+          $log | Select-Object -Last 25
+          if ($log -match 'ERREUR|Exception non gérée|Démarrage impossible') { throw "Errors in the startup log" }
+
+      - name: Window and wheel captures (French and English)
+        id: capture
+        shell: pwsh
+        run: |
+          $env:FILEWHEEL_CAPTURE_ENGINES = "$PWD\ci-engines"
+          $out = "$PWD\captures"; New-Item -ItemType Directory -Force $out | Out-Null
+          $fail = 0
+          foreach ($lang in 'fr', 'en') {
+            $p = Start-Process publish\FileWheel.exe -ArgumentList '--capture', "`"$out`"", '--langue', $lang -Wait -PassThru
+            Write-Host "Capture $lang : $($p.ExitCode) failing screen(s)"
+            $fail += $p.ExitCode
+            Get-Content "$out\$lang-rapport.txt" -ErrorAction SilentlyContinue
+          }
+          if (Test-Path "$out\en-textes-non-traduits.txt") {
+            $n = (Get-Content "$out\en-textes-non-traduits.txt").Count
+            Write-Host "Untranslated strings seen in English: $n"
+          }
+          "failures=$fail" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: captures
+          path: captures
+
+      - name: Publish captures to the ci-screenshots branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: pwsh
+        run: |
+          Set-Location captures
+          git init -q -b ci-screenshots
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Captures for $env:GITHUB_SHA"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-screenshots
+
+      # ------------------------------------------------------------------ signing (optional, SignPath)
+
+      - name: Upload unsigned program for signing
+        id: unsigned
+        if: env.SIGNPATH_TOKEN != '' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-program
+          path: publish/FileWheel*.exe
+
+      - name: Sign program (SignPath)
+        if: env.SIGNPATH_TOKEN != '' && github.event_name != 'pull_request'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: publish
+
+      # ------------------------------------------------------------------ packages
 
       - name: NSIS
         shell: pwsh
@@ -36,19 +156,101 @@ jobs:
       - name: FileWheel-Setup installer
         shell: pwsh
         run: |
-          $v = ([xml](Get-Content Directory.Build.props -Raw)).SelectSingleNode('//Version').InnerText.Trim()
-          & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" /V2 "/DVERSION=$v" "/DPUBLISH_DIR=$PWD\publish" "/DOUTFILE=$PWD\FileWheel-Setup-$v.exe" "/DICON=$PWD\assets\filewheel.ico" "/DSIDE_BITMAP=$PWD\assets\installer-side.bmp" installer\FileWheel.nsi
+          $v = '${{ steps.version.outputs.value }}'
+          & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" /V2 "/DVERSION=$v" "/DPUBLISH_DIR=$PWD\publish" "/DOUTFILE=$PWD\dist\FileWheel-Setup-$v.exe" "/DICON=$PWD\assets\filewheel.ico" "/DSIDE_BITMAP=$PWD\assets\installer-side.bmp" installer\FileWheel.nsi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Get-Item FileWheel-Setup-*.exe | Format-Table Name, Length
+
+      - name: Upload unsigned installer for signing
+        id: unsignedsetup
+        if: env.SIGNPATH_TOKEN != '' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-setup
+          path: dist/FileWheel-Setup-*.exe
+
+      - name: Sign installer (SignPath)
+        if: env.SIGNPATH_TOKEN != '' && github.event_name != 'pull_request'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsignedsetup.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: dist
+
+      - name: Installer test (silent install, files, uninstall)
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.value }}'
+          Start-Process "dist\FileWheel-Setup-$v.exe" -ArgumentList '/S' -Wait
+          $dir = "$env:LOCALAPPDATA\Programs\FileWheel"
+          foreach ($f in 'FileWheel.exe', 'Uninstall.exe') { if (-not (Test-Path "$dir\$f")) { throw "$f missing after install" } }
+          $reg = Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\FileWheel'
+          if ($reg.DisplayVersion -ne $v) { throw "Wrong DisplayVersion: $($reg.DisplayVersion)" }
+          Start-Process "$dir\FileWheel.exe" -ArgumentList '--quitter' -Wait
+          Get-Process FileWheel -ErrorAction SilentlyContinue | Stop-Process -Force
+          Start-Process "$dir\Uninstall.exe" -ArgumentList '/S', "_?=$dir" -Wait
+          Start-Sleep -Seconds 2
+          if (Test-Path "$dir\FileWheel.exe") { throw "FileWheel.exe still present after uninstall" }
+          if (Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\FileWheel') { throw "Uninstall entry still present" }
+          Write-Host "Install / uninstall OK"
+
+      - name: Portable version (zip with its uninstaller)
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.value }}'
+          $p = "portable\FileWheel"
+          New-Item -ItemType Directory -Force $p | Out-Null
+          Copy-Item publish\* $p -Recurse
+          Copy-Item installer\portable\* $p
+          Compress-Archive -Path $p -DestinationPath "dist\FileWheel-$v-portable-win-x64.zip" -CompressionLevel Optimal
+
+      - name: Checksums
+        shell: pwsh
+        run: |
+          Set-Location dist
+          Get-ChildItem -File | Where-Object Name -ne 'SHA256SUMS.txt' | ForEach-Object {
+            "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name
+          } | Set-Content SHA256SUMS.txt -Encoding ascii
+          Get-Content SHA256SUMS.txt
+
+      - name: winget manifests
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.value }}'
+          $sha = (Get-FileHash "dist\FileWheel-Setup-$v.exe" -Algorithm SHA256).Hash
+          $url = "https://github.com/${{ github.repository }}/releases/download/v$v/FileWheel-Setup-$v.exe"
+          .\installer\New-WingetManifest.ps1 -Version $v -InstallerUrl $url -Sha256 $sha -OutDir winget
+          Compress-Archive -Path "winget\$v\*" -DestinationPath "dist\winget-manifests-$v.zip"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: FileWheel-Setup
-          path: FileWheel-Setup-*.exe
+          name: FileWheel-${{ steps.version.outputs.value }}
+          path: dist
 
-      - name: Release (v* tags)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Release files
+        if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: FileWheel-Setup-*.exe
+          files: |
+            dist/FileWheel-Setup-*.exe
+            dist/FileWheel-*-portable-win-x64.zip
+            dist/SHA256SUMS.txt
+            dist/winget-manifests-*.zip
           generate_release_notes: ${{ github.event_name == 'push' }}
+
+      - name: Submit to winget (optional)
+        if: env.WINGET_TOKEN != '' && (github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v'))
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          .\wingetcreate.exe submit --token $env:WINGET_TOKEN "winget\${{ steps.version.outputs.value }}"
+
+      - name: Captures result
+        if: steps.capture.outputs.failures != '0'
+        shell: pwsh
+        run: |
+          Write-Host "::error::${{ steps.capture.outputs.failures }} screen(s) failed to open during the captures (see the captures artifact)"
+          exit 1

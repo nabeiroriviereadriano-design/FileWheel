@@ -8,7 +8,13 @@ public enum InstallMethod
     Winget,
     /// <summary>Installation manuelle par l'utilisateur ; FileWheel detecte l'executable.</summary>
     Manual,
+    /// <summary>Fichiers de versions precises, adresses et empreintes SHA-256 fixees dans le code.</summary>
+    Pinned,
 }
+
+/// <summary>Fichier d'une installation « Pinned » : adresse officielle, taille et empreinte connues d'avance.</summary>
+/// <param name="ExtractEntry">Pour une archive ZIP : seul ce fichier (chemin dans l'archive) est extrait.</param>
+public sealed record PinnedFile(string Url, string Sha256, long Size, string? ExtractEntry = null);
 
 /// <summary>Description d'un moteur externe et de la maniere legale de l'obtenir.</summary>
 public sealed record EngineDefinition
@@ -34,6 +40,11 @@ public sealed record EngineDefinition
     public bool IsLibrary { get; init; }
     /// <summary>Ne jamais rechercher dans le PATH sous Windows (ex. « convert.exe » est un outil systeme).</summary>
     public bool NoPathLookupOnWindows { get; init; }
+    /// <summary>Methode Pinned : version et fichiers (Windows x64).</summary>
+    public string? PinnedVersion { get; init; }
+    public IReadOnlyList<PinnedFile> PinnedFiles { get; init; } = [];
+    /// <summary>Autres moteurs necessaires (affiches dans les parametres).</summary>
+    public IReadOnlyList<string> Requires { get; init; } = [];
 }
 
 public static class EngineIds
@@ -45,6 +56,8 @@ public static class EngineIds
     public const string Pdfium = "pdfium";
     public const string LibreOffice = "libreoffice";
     public const string Calibre = "calibre";
+    public const string BackgroundRemoval = "detourage";
+    public const string VcRedist = "vcredist";
 }
 
 public static class EngineCatalog
@@ -117,6 +130,33 @@ public static class EngineCatalog
             ExeNames = ["ebook-convert.exe", "ebook-convert"],
             KnownPaths = [@"%ProgramFiles%\Calibre2\ebook-convert.exe", @"%ProgramFiles(x86)%\Calibre2\ebook-convert.exe"],
             Method = InstallMethod.Winget, WingetId = "calibre.calibre", ApproxMiB = 200,
+        },
+        new()
+        {
+            Id = EngineIds.BackgroundRemoval, Name = "Détourage IA (IS-Net + ONNX Runtime)",
+            Purpose = "Retire l'arrière-plan des photos (outil « Détourer »). Le modèle d'IA s'exécute sur votre PC : l'image n'est envoyée nulle part.",
+            License = "Modèle IS-Net « general use » (DIS) : Apache 2.0, distribué par le projet rembg (MIT). ONNX Runtime : MIT (Microsoft).",
+            Homepage = "https://github.com/xuebinqin/DIS",
+            ExeNames = ["isnet-general-use.onnx"],
+            Method = InstallMethod.Pinned, PinnedVersion = "IS-Net general use + ONNX Runtime 1.31.1", ApproxMiB = 190, IsLibrary = true,
+            PinnedFiles =
+            [
+                new("https://github.com/danielgatis/rembg/releases/download/v0.0.0/isnet-general-use.onnx",
+                    "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a", 178_648_008),
+                new("https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-win-x64-1.31.1.zip",
+                    "5869e26bb25314375f2d5ef1877e3ea06b1543d6c710e6e4a1ec2f7177ab4b2c", 82_929_944,
+                    ExtractEntry: "onnxruntime-win-x64-1.31.1/lib/onnxruntime.dll"),
+            ],
+            Requires = [EngineIds.VcRedist],
+        },
+        new()
+        {
+            Id = EngineIds.VcRedist, Name = "Microsoft Visual C++ 2015-2022 (x64)",
+            Purpose = "Bibliothèques Microsoft nécessaires à ONNX Runtime (détourage IA). Souvent déjà présentes sur le PC.",
+            License = "Licence logicielle Microsoft (redistribuable gratuit).", Homepage = "https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist",
+            ExeNames = ["msvcp140_1.dll"],
+            KnownPaths = [@"%SystemRoot%\System32\msvcp140_1.dll"],
+            Method = InstallMethod.Winget, WingetId = "Microsoft.VCRedist.2015+.x64", ApproxMiB = 25, IsLibrary = true,
         },
     ];
 

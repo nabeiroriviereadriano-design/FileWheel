@@ -1,19 +1,17 @@
-# Known limitations of FileWheel 0.2.0
+# Known limitations of FileWheel 0.3.0
 
 This document honestly lists what is not done, what could not be verified, and why.
 
 ## What has not been run on Windows
 
-FileWheel was developed and tested in a Linux environment: the conversion engine, the wheel logic (trigger, multiple screens, menus, interaction) and the file operations were **really** tested there (204 tests passed, see TEST-RESULTS.md).
+FileWheel was developed and tested in a Linux environment: the conversion engine, the wheel logic (trigger, multiple screens, menus, interaction) and the file operations were **really** tested there (see TEST-RESULTS.md). The new PDF tools and the AI background removal are tested there too, with the real PDFium and ONNX Runtime libraries.
 
-The Windows-specific parts **compile on a real Windows machine** (GitHub Actions, `windows-latest`), but most of them **have not been run** yet:
-- keyboard/mouse hooks, Alt menu suppression, OLE drag and drop over File Explorer;
+The Windows-specific parts **compile and start on a real Windows machine** (GitHub Actions, `windows-latest`): at each change the app is started and stopped, every window and the wheel are opened in French and in English and saved as screenshots, the OCR is run on a sample image, the background removal on a sample photo, and the installer is installed and uninstalled silently. What still needs a person in front of a PC:
+- the real gesture: keyboard/mouse hooks, Alt menu suppression, OLE drag and drop over File Explorer;
 - Shell APIs (Recycle Bin, Properties, Open with, Share, shortcuts);
 - notification icon, auto-start, single instance;
-- all WPF windows and the design system (no real screenshot could be taken);
-- WIC conversions;
-- image tools (crop, background, compress, annotate, metadata) and the new Express wheel: compiled, never run;
-- the `FileWheel-Setup.exe` installer was tested under Wine (silent install, update and uninstall, Welcome / Update / Maintenance screens) and is built by GitHub Actions on Windows.
+- interacting with the windows (the screenshots show them open, not used);
+- the in-app update (download, silent installer, restart) on a real installation.
 
 The wheel itself (trigger, display, drop) was validated on the user's PC in version 0.1.5.
 
@@ -32,12 +30,12 @@ If an error appears at installation or first launch, the message and the log (`%
 - **Share**: uses the Windows share sheet when available; otherwise FileWheel opens File Explorer on the files.
 - The toggle switch does not animate (the state changes instantly).
 - Window buttons stay the Windows ones (no macOS "traffic lights"), on purpose.
-- The interface is only available in French.
+- The interface is available in English and French. Texts coming from external engines (FFmpeg, ImageMagick, LibreOffice messages in the log) stay as the engine writes them. A few rare messages may still appear in French in the English interface: the automatic check lists them at each build so they can be added.
 
 ## Conversion
 
 Not supported (and therefore never offered):
-- **OCR**: a scanned PDF or an image does not produce text;
+- **OCR inside conversions**: "PDF → TXT" extracts the text layer only; for a scanned PDF, use *PDF › Recognize text*;
 - **CAD**: STEP, IGES, DXF/DWG (recognized, not converted); **FBX** (proprietary format);
 - **WOFF2** (recognized, not converted);
 - **creating RAR archives** (proprietary format); RAR extraction requires 7-Zip;
@@ -57,6 +55,25 @@ Losses to be aware of (always announced before converting):
 - Compressing to PNG is lossless: the gain mostly comes from the maximum size. JPEG is re-encoded (slight effect at each pass).
 - "Copy without metadata" rewrites the pixels: for a JPEG, that is a re-encode at quality 95.
 - Annotate: text is typed in a small window and then placed with a click (no in-place editing).
+
+## Text recognition (OCR)
+
+- It uses the Windows engine: quality is good for printed text, poor for handwriting.
+- Only the languages installed in Windows with the "Optical character recognition" option are available.
+- Layout is simplified to lines and paragraphs (no tables, no columns).
+- Large pages are rendered at up to 200 dpi, within the Windows engine's size limit.
+
+## Background removal (Cutout)
+
+- Optional engine of about 190 MB (IS-Net model + ONNX Runtime), downloaded once with your consent; needs the Microsoft Visual C++ 2015-2022 runtime.
+- Runs on the processor (no graphics card needed): a few seconds per photo; the model stays in memory while FileWheel runs.
+- Works best on photos with a clear subject; fine details (hair, glass, smoke) may be imperfect. "Soft edges" helps for hair and fur.
+
+## PDF tools
+
+- Compression only recompresses images (photos, color scans) as JPEG; a PDF made of text or vector drawings gains little. Black-and-white scans (1 bit), transparent images and images already small are left as they are.
+- Rotation sets the page rotation (like a PDF viewer does); it does not redraw the content.
+- Password-protected PDFs: open them once in a PDF viewer to remove the password, then use the tools.
 
 ## Tasks
 

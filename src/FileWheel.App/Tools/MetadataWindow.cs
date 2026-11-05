@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using FileWheel.Core.Localization;
 using FileWheel.App.Ui;
 
 namespace FileWheel.App.Tools;
@@ -44,7 +45,7 @@ public sealed class MetadataWindow : ToolWindow
             Section("Autres");
             foreach (var r in other) Add(Row(r.key, r.value));
         }
-        Status.Text = gps.Count > 0 ? "⚠ Contient une position GPS" : $"{rows.Count(r => r.group > 0)} information(s) trouvée(s)";
+        Status.Text = Loc.T(gps.Count > 0 ? "⚠ Contient une position GPS" : $"{rows.Count(r => r.group > 0)} information(s) trouvée(s)");
         SetPrimary("Créer une copie sans métadonnées", Strip);
     }
 

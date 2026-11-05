@@ -16,6 +16,9 @@ if (Samples.Missing.Count > 0) Console.WriteLine("Outils absents : " + string.Jo
 await WheelTests.RunAll();
 await FileOpsTests.RunAll();
 await ConversionTests.RunAll();
+await PdfToolsTests.RunAll();
+await AiTests.RunAll();
+await LocTests.RunAll();
 await ArchiveTests.RunAll();
 await WindowsOnlyTests.RunAll();
 

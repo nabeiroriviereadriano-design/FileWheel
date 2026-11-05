@@ -7,7 +7,7 @@
 | Never break native drag and drop | The wheel is an ordinary OLE drop target: it blocks no click, injects no mouse movement, and always answers "Copy" (never "Move") so that the source File Explorer never deletes the originals. Dropping elsewhere = normal Windows drop. |
 | Originals untouched | Every conversion writes to a temporary `.~fw-*.tmp` file in the target folder, validates it, then renames it. An output can never target an input file. |
 | No implicit overwrite | Name conflict = new name "(2)" by default; "Replace" only exists as an explicit choice. |
-| Local by default | No conversion sends data over the network. The only network accesses are engine downloads you start yourself. |
+| Local by default | No conversion sends data over the network: OCR uses Windows, background removal runs an AI model on the PC. The only network accesses are engine downloads you start yourself and the update check (once a day, can be turned off) which only reads the public releases page on GitHub. |
 | No unknown executable | Engines come from official repositories listed in the code, are verified by SHA-256 and installed into `%LOCALAPPDATA%\FileWheel\engines`. No automatic download. |
 | No shell | All programs are started with an argument list (`ProcessStartInfo.ArgumentList`): no file name is ever interpreted by `cmd.exe` or PowerShell. |
 | No elevation | `asInvoker`: FileWheel never asks for administrator rights. |
@@ -34,10 +34,20 @@
 - E-mails converted to HTML: scripts, event handlers and remote images removed.
 - SVG: a file that declares XML entities or references an external resource (href, src, url()) is refused before any rendering by ImageMagick.
 
+## Updates
+
+- The check reads `api.github.com/repos/nabeiroriviereadriano-design/FileWheel/releases/latest`: no account, no identifier, no file name is sent (only the standard "FileWheel/version" user agent).
+- An update is only installed after you click **Update**. The installer must come from this repository's releases on `github.com`; its SHA-256 checksum (published by GitHub, or listed in the release's `SHA256SUMS.txt`) is verified before it runs. Otherwise the update is refused.
+
+## Background removal model
+
+- The model and ONNX Runtime are "pinned": exact URLs and SHA-256 checksums are written in FileWheel's code (`EngineCatalog.cs`); a different file is refused. From the ONNX Runtime archive only `onnxruntime.dll` is kept.
+
 ## Personal data
 
 - History: file names, conversion, date and result — never the content. Can be disabled and cleared.
 - Log: the user profile folder is masked (`%USERPROFILE%`), file content never appears; kept 14 days.
+- Problem reports: before anything leaves the PC, file names, paths, e-mail addresses, the user name and the PC name are masked in the log excerpt (`LogSanitizer`), and the whole report is shown and editable. Sending means opening a pre-filled GitHub issue in your browser.
 
 ## Reporting a vulnerability
 

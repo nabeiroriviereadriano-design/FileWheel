@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using FileWheel.Core.Localization;
 using FileWheel.Conversion;
 using FileWheel.Conversion.Core;
 using FileWheel.Core.Actions;
@@ -119,7 +120,7 @@ public sealed class CustomActionDialog : DialogWindow
             draft.ConversionOptions["__capability"] = _capKey;
         }
         var errors = draft.Validate();
-        if (errors.Count > 0) { _errors.Text = string.Join("\n", errors); return; }
+        if (errors.Count > 0) { _errors.Text = string.Join("\n", errors.Select(Loc.T)); return; }
         var warnings = draft.Warnings();
         if (warnings.Count > 0 && !ConfirmDialog.Ask("Attention", string.Join("\n", warnings), "Enregistrer quand même")) return;
         if (_type == CustomActionType.RunProgram) draft.ProgramSha256 = CustomAction.ComputeSha256(draft.ProgramPath);

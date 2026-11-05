@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using FileWheel.Core.Localization;
 using FileWheel.Conversion.Engines;
 using FileWheel.Core.FileOperations;
 using FileWheel.Core.Wheel;
@@ -59,7 +60,7 @@ public class DialogWindow : Window
         else Buttons.Children.Add(b);
     }
 
-    public bool Run() => ShowDialog() == true;
+    public bool Run() => !Ui.Headless && ShowDialog() == true;
 }
 
 /// <summary>Saisie d'un texte (renommage...), validee avant fermeture.</summary>
@@ -79,7 +80,7 @@ public sealed class TextPromptDialog : DialogWindow
         _error = Ui.Text("", Ui.Error, 12);
         Body.Children.Add(_box);
         Body.Children.Add(_error);
-        _box.TextChanged += (_, _) => _error.Text = _validate(_box.Text) ?? "";
+        _box.TextChanged += (_, _) => _error.Text = Loc.T(_validate(_box.Text) ?? "");
         Loaded += (_, _) =>
         {
             _box.Focus();
@@ -93,7 +94,7 @@ public sealed class TextPromptDialog : DialogWindow
     private void Confirm()
     {
         var err = _validate(_box.Text);
-        if (err is not null) { _error.Text = err; return; }
+        if (err is not null) { _error.Text = Loc.T(err); return; }
         DialogResult = true;
     }
 
@@ -249,9 +250,9 @@ public sealed class CompressDialog : DialogWindow
         Buttons.Children.Add(Ui.Button("Compresser", () =>
         {
             var f = FileWheel.Conversion.Providers.Archives.ArchiveService.CreateFormats.First(x => x.Id == Format);
-            if (pwd.Password != pwd2.Password) { err.Text = "Les mots de passe ne correspondent pas."; return; }
-            if (pwd.Password.Length > 0 && !f.SupportsPassword) { err.Text = $"{f.Label} ne permet pas de mot de passe."; return; }
-            if ((f.NeedsSevenZip || pwd.Password.Length > 0) && !sevenZipAvailable) { err.Text = "Ce choix nécessite le moteur 7-Zip (Paramètres › Moteurs)."; return; }
+            if (pwd.Password != pwd2.Password) { err.Text = Loc.T("Les mots de passe ne correspondent pas."); return; }
+            if (pwd.Password.Length > 0 && !f.SupportsPassword) { err.Text = Loc.T($"{f.Label} ne permet pas de mot de passe."); return; }
+            if ((f.NeedsSevenZip || pwd.Password.Length > 0) && !sevenZipAvailable) { err.Text = Loc.T("Ce choix nécessite le moteur 7-Zip (Paramètres › Moteurs)."); return; }
             Password = pwd.Password.Length > 0 ? pwd.Password : null;
             DialogResult = true;
         }, accent: true));
@@ -266,11 +267,25 @@ public sealed class EngineConsentDialog : DialogWindow
     {
         Body.Children.Add(Ui.Text(offer.Engine.Purpose, null, 14));
         Body.Children.Add(Ui.Field("Version", Ui.Text(offer.Version), labelWidth: 150));
-        Body.Children.Add(Ui.Field("Fichier", Ui.Text($"{offer.AssetName} ({Ui.Size(offer.Size)})"), labelWidth: 150));
-        Body.Children.Add(Ui.Field("Provenance", Ui.Text(offer.Url), labelWidth: 150));
-        Body.Children.Add(Ui.Field("Empreinte SHA-256", new TextBox { Text = offer.Sha256, IsReadOnly = true, FontFamily = new System.Windows.Media.FontFamily("Consolas") }, labelWidth: 150));
+        if (offer.Files is { Count: > 0 } files)
+        {
+            Body.Children.Add(Ui.Field("Téléchargement", Ui.Text($"{files.Count} fichiers, {Ui.Size(offer.Size)} au total"), labelWidth: 150));
+            var list = string.Join("\n\n", files.Select(f => $"{f.Url}\nSHA-256 {f.Sha256}" + (f.ExtractEntry is null ? "" : $"\n(seul « {System.IO.Path.GetFileName(f.ExtractEntry)} » est conservé)")));
+            Body.Children.Add(Ui.Field("Provenance et empreintes", new TextBox
+            {
+                Text = list, IsReadOnly = true, TextWrapping = TextWrapping.Wrap, FontFamily = new System.Windows.Media.FontFamily("Consolas"), FontSize = 11,
+            }, labelWidth: 150));
+        }
+        else
+        {
+            Body.Children.Add(Ui.Field("Fichier", Ui.Text($"{offer.AssetName} ({Ui.Size(offer.Size)})"), labelWidth: 150));
+            Body.Children.Add(Ui.Field("Provenance", Ui.Text(offer.Url), labelWidth: 150));
+            Body.Children.Add(Ui.Field("Empreinte SHA-256", new TextBox { Text = offer.Sha256, IsReadOnly = true, FontFamily = new System.Windows.Media.FontFamily("Consolas") }, labelWidth: 150));
+        }
         Body.Children.Add(Ui.Field("Licence", Ui.Text(offer.Engine.License), labelWidth: 150));
-        Body.Children.Add(Ui.Hint("Le paquet est téléchargé depuis le dépôt officiel indiqué, vérifié avec l'empreinte publiée par GitHub, puis décompressé dans votre profil (%LOCALAPPDATA%\\FileWheel\\engines). Aucun installeur n'est exécuté, rien n'est modifié dans Windows. Le désinstalleur de FileWheel le supprime."));
+        Body.Children.Add(Ui.Hint(offer.Files is null
+            ? "Le paquet est téléchargé depuis le dépôt officiel indiqué, vérifié avec l'empreinte publiée par GitHub, puis décompressé dans votre profil (%LOCALAPPDATA%\\FileWheel\\engines). Aucun installeur n'est exécuté, rien n'est modifié dans Windows. Le désinstalleur de FileWheel le supprime."
+            : "Chaque fichier est téléchargé depuis la source officielle indiquée et vérifié avec l'empreinte SHA-256 inscrite dans FileWheel, puis rangé dans votre profil (%LOCALAPPDATA%\\FileWheel\\engines). Aucun installeur n'est exécuté. Le désinstalleur de FileWheel le supprime."));
         Buttons.Children.Add(Ui.Button("Télécharger et installer", () => DialogResult = true, accent: true));
         AddButton("Annuler", false, isCancel: true);
     }
@@ -280,6 +295,7 @@ public sealed class EngineConsentDialog : DialogWindow
 public sealed class FirstRunDialog : DialogWindow
 {
     public bool StartWithWindows { get; private set; }
+    public bool CheckUpdates { get; private set; } = true;
 
     public FirstRunDialog(string chord, bool askStartup = true) : base("Bienvenue dans FileWheel", 560)
     {
@@ -293,7 +309,15 @@ public sealed class FirstRunDialog : DialogWindow
             Body.Children.Add(start);
             Body.Children.Add(Ui.Hint("Modifiable à tout moment dans Paramètres › Général ou depuis l'icône de notification."));
         }
-        Buttons.Children.Add(Ui.Button("Commencer", () => { StartWithWindows = start.IsChecked == true; DialogResult = true; }, accent: true));
+        var updates = new CheckBox { Content = "Me prévenir quand une nouvelle version est disponible", IsChecked = true, Margin = new Thickness(0, 10, 0, 0) };
+        Body.Children.Add(updates);
+        Body.Children.Add(Ui.Hint("FileWheel consulte alors une fois par jour la page des versions sur GitHub. Aucun fichier ni information personnelle n'est envoyé."));
+        Buttons.Children.Add(Ui.Button("Commencer", () =>
+        {
+            StartWithWindows = start.IsChecked == true;
+            CheckUpdates = updates.IsChecked == true;
+            DialogResult = true;
+        }, accent: true));
     }
 }
 

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using FileWheel.Core.Localization;
 using FileWheel.Conversion;
 using FileWheel.Conversion.Core;
 using FileWheel.Core.Wheel;
@@ -75,7 +76,7 @@ public sealed class TasksWindow : Window
     private UIElement JobRow(ConversionJob j)
     {
         var col = new StackPanel();
-        col.Children.Add(new TextBlock { Text = j.Title, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+        col.Children.Add(new TextBlock { Text = Loc.T(j.Title), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
         var cap = _engine.Registry.ByKey(j.Order.CapabilityKey);
         var status = j.StatusLabel + (cap is not null ? "  ·  " + cap.DisplayLabel : "");
         if (j.Remaining is { } r && j.Status == JobStatus.Running) status += $"  ·  environ {Format(r)} restant";
@@ -100,7 +101,7 @@ public sealed class TasksWindow : Window
     private UIElement OpRow(FileOperation o)
     {
         var col = new StackPanel();
-        col.Children.Add(new TextBlock { Text = o.Title, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+        col.Children.Add(new TextBlock { Text = Loc.T(o.Title), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
         var text = o.Status switch
         {
             OperationStatus.Running => o.Stage.Length > 0 ? o.Stage : "En cours…",

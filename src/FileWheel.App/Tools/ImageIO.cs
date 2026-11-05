@@ -112,7 +112,7 @@ public static class ImageIO
     {
         var dir = folder ?? Path.GetDirectoryName(Path.GetFullPath(sourcePath))!;
         var stem = Path.GetFileNameWithoutExtension(sourcePath);
-        return NameConflict.UniquePath(Path.Combine(dir, $"{stem} {suffix}{extension}"));
+        return NameConflict.UniquePath(Path.Combine(dir, $"{stem} {FileWheel.Core.Localization.Loc.T(suffix)}{extension}"));
     }
 
     /// <summary>Encode l'image selon l'extension (qualite JPEG 1-100).</summary>

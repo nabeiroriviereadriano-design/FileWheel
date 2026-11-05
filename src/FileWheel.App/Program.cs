@@ -14,11 +14,30 @@ public static class Program
     ///   --parametres       ouvre les parametres (ou les affiche dans l'instance deja lancee)
     ///   --quitter          demande a l'instance en cours de s'arreter (utilise par l'installeur et le desinstalleur)
     ///   --apres-installation  lance par FileWheel-Setup a la fin de l'installation ou de la mise a jour
+    ///   --attendre &lt;pid&gt;  attend la fin d'un processus avant de demarrer (redemarrage apres changement de langue)
+    ///   --capture &lt;dossier&gt; [--langue fr|en]  verification automatique : ouvre chaque fenetre et l'enregistre en PNG
     /// </summary>
     [STAThread]
     public static int Main(string[] args)
     {
         if (Environment.GetEnvironmentVariable("FILEWHEEL_HOME") is { Length: > 0 } home) AppPaths.OverrideRoot(home);
+        else AppPaths.DetectPortable(AppContext.BaseDirectory);
+
+        int capture = Array.FindIndex(args, a => a.Equals("--capture", StringComparison.OrdinalIgnoreCase));
+        if (capture >= 0 && capture + 1 < args.Length)
+        {
+            int lang = Array.FindIndex(args, a => a.Equals("--langue", StringComparison.OrdinalIgnoreCase));
+            return CaptureMode.Run(args[capture + 1], lang >= 0 && lang + 1 < args.Length ? args[lang + 1] : "fr");
+        }
+
+        int wait = Array.FindIndex(args, a => a.Equals("--attendre", StringComparison.OrdinalIgnoreCase));
+        if (wait >= 0 && wait + 1 < args.Length && int.TryParse(args[wait + 1], out var pid))
+        {
+            try { using var old = System.Diagnostics.Process.GetProcessById(pid); old.WaitForExit(15000); } catch { /* deja termine */ }
+        }
+
+        // Langue de l'interface (avant toute fenetre)
+        try { FileWheel.Core.Localization.Loc.Set(FileWheel.Core.Settings.SettingsStore.Load().Language); } catch { }
         bool background = args.Any(a => a.Equals("--arriere-plan", StringComparison.OrdinalIgnoreCase));
         bool afterSetup = args.Any(a => a.Equals("--apres-installation", StringComparison.OrdinalIgnoreCase));
 
@@ -52,7 +71,7 @@ public static class Program
             {
                 Log.Error("Erreur d'interface", e.Exception);
                 e.Handled = true; // l'application resident reste en vie ; l'erreur est journalisee
-                try { Ui.Ui.Message("Une erreur inattendue s'est produite :\n" + e.Exception.Message + "\n\nDétails dans le journal (menu de l'icône › Ouvrir le dossier des journaux).", image: MessageBoxImage.Error); } catch { }
+                try { if (!Ui.Ui.Headless) Ui.Ui.Message("Une erreur inattendue s'est produite :\n" + e.Exception.Message + "\n\nDétails dans le journal (menu de l'icône › Ouvrir le dossier des journaux).", image: MessageBoxImage.Error); } catch { }
             };
             var watcher = new Thread(() =>
             {
@@ -72,7 +91,7 @@ public static class Program
         {
             Log.Error("Démarrage impossible", ex);
             Log.Flush();
-            MessageBox.Show("FileWheel n'a pas pu démarrer :\n" + ex.Message, "FileWheel", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(FileWheel.Core.Localization.Loc.T("FileWheel n'a pas pu démarrer :") + "\n" + ex.Message, "FileWheel", MessageBoxButton.OK, MessageBoxImage.Error);
             return 1;
         }
     }

@@ -40,6 +40,11 @@ public static class Env
         if (pdfium.Length > 0 && File.Exists(Path.Combine(pdfium, "libpdfium.so")))
             File.Copy(Path.Combine(pdfium, "libpdfium.so"), Path.Combine(ShimDir, "libpdfium.so"), true);
 
+        // Detourage IA : modele IS-Net + ONNX Runtime pour Linux (dossier indique par FILEWHEEL_TEST_AI)
+        if (Environment.GetEnvironmentVariable("FILEWHEEL_TEST_AI") is { Length: > 0 } ai && Directory.Exists(ai))
+            foreach (var f in Directory.GetFiles(ai).Where(f => f.EndsWith(".onnx") || Path.GetFileName(f).StartsWith("libonnxruntime.so")))
+                File.CreateSymbolicLink(Path.Combine(ShimDir, Path.GetFileName(f)), f);
+
         // Calibre (QtWebEngine) refuse de tourner en root sans cette option : propre a l'environnement de test Linux.
         if (!OperatingSystem.IsWindows() && Environment.UserName == "root")
             Environment.SetEnvironmentVariable("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox");

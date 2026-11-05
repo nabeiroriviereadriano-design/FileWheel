@@ -9,7 +9,7 @@ namespace FileWheel.Conversion.Providers.Pdf;
 /// et aucun probleme d'encodage de chemin (accents, caracteres non latins).
 /// PDFium n'etant pas re-entrant, tous les appels sont serialises.
 /// </summary>
-public static unsafe class Pdfium
+public static unsafe partial class Pdfium
 {
     private static readonly object Gate = new();
     private static IntPtr _lib;
@@ -68,6 +68,7 @@ public static unsafe class Pdfium
             _textClose = (delegate* unmanaged[Cdecl]<IntPtr, void>)F("FPDFText_ClosePage");
             _textCount = (delegate* unmanaged[Cdecl]<IntPtr, int>)F("FPDFText_CountChars");
             _textGet = (delegate* unmanaged[Cdecl]<IntPtr, int, int, ushort*, int>)F("FPDFText_GetText");
+            LoadEditFunctions(F);
             _init();
         }
     }
@@ -102,7 +103,7 @@ public static unsafe class Pdfium
     {
         try
         {
-            var fs = (FileStream)GCHandle.FromIntPtr(param).Target!;
+            var fs = (Stream)GCHandle.FromIntPtr(param).Target!;
             fs.Position = position;
             var span = new Span<byte>(buf, (int)size);
             int read = 0;
@@ -118,9 +119,10 @@ public static unsafe class Pdfium
     }
 
     /// <summary>Document PDF ouvert (a fermer avec Dispose). Toutes les operations sont serialisees.</summary>
-    public sealed class Document : IDisposable
+    public sealed partial class Document : IDisposable
     {
         private IntPtr _doc;
+        internal IntPtr Handle => _doc;
         private readonly FileStream _fs;
         private GCHandle _handle;
         private readonly IntPtr _access;

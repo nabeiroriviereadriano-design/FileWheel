@@ -55,6 +55,12 @@ public sealed class ActionExecutor
             case ActionIds.ImageAnnotate: OpenTool(files[0], l => new Tools.AnnotateWindow(l)); break;
             case ActionIds.ImageMetadata: OpenTool(files[0], l => new Tools.MetadataWindow(l)); break;
             case ActionIds.ImageCompress: OpenTool(files[0], l => new Tools.CompressWindow(files.Where(File.Exists).ToList(), l)); break;
+            case ActionIds.ImageRemoveBackground: RemoveBackground(files[0]); break;
+            case ActionIds.RecognizeText: foreach (var f in files.Take(5)) ShowWindow(new Tools.OcrWindow(f)); break;
+            case ActionIds.PdfMerge: PdfMerge(files); break;
+            case ActionIds.PdfCompress: PdfCompress(files); break;
+            case ActionIds.PdfPages: PdfPages(files[0]); break;
+            case ActionIds.PdfRotate: PdfRotate(files, int.TryParse(item.Argument, out var q) ? q : 1); break;
             case ActionIds.ConvertDialog: _app.OpenQuickConvert(files, null); break;
             case ActionIds.ConvertAdvanced: _app.OpenConverter(files); break;
             case ActionIds.ImageResize:
@@ -125,6 +131,129 @@ public sealed class ActionExecutor
         w.Activate();
         var h = new System.Windows.Interop.WindowInteropHelper(w).Handle;
         if (h != IntPtr.Zero) FileWheel.Windows.SystemIntegration.WindowStyles.ForceForeground(h);
+    }
+
+    private void ShowWindow(Tools.ToolWindow w)
+    {
+        w.Closed += (_, _) =>
+        {
+            if (w.Result is { } created) _app.ReportCreated(created, w.Title.Split(" — ")[0]);
+        };
+        w.Show();
+        w.Activate();
+        var h = new System.Windows.Interop.WindowInteropHelper(w).Handle;
+        if (h != IntPtr.Zero) FileWheel.Windows.SystemIntegration.WindowStyles.ForceForeground(h);
+    }
+
+    /// <summary>Moteur present, ou propose de l'installer (avec accord). Vrai si disponible.</summary>
+    private async Task<bool> EnsureEngineAsync(string id)
+    {
+        if (Engine.Dependencies.IsAvailable(id)) return true;
+        var def = FileWheel.Conversion.Engines.EngineCatalog.Get(id);
+        if (!ConfirmDialog.Ask(def.Name, $"Cet outil utilise {def.Name}, qui n'est pas encore installé.\n\n{def.Purpose}\n\nL'installer maintenant ? (environ {def.ApproxMiB} Mo, téléchargement vérifié)", "Installer"))
+            return false;
+        return await EngineInstaller.InstallAsync(def, Engine.Dependencies, null);
+    }
+
+    // ------------------------------------------------------------------ detourage
+
+    private async void RemoveBackground(string path)
+    {
+        try
+        {
+            if (!await EnsureEngineAsync(FileWheel.Conversion.Engines.EngineIds.BackgroundRemoval)) return;
+            OpenTool(path, l => new Tools.RemoveBackgroundWindow(l));
+        }
+        catch (Exception ex) { Ui.Ui.Message(ConversionManager.Translate(ex).Message, image: MessageBoxImage.Error); }
+    }
+
+    // ------------------------------------------------------------------ outils PDF
+
+    private async Task<bool> PdfReadyAsync()
+    {
+        if (!await EnsureEngineAsync(FileWheel.Conversion.Engines.EngineIds.Pdfium)) return false;
+        FileWheel.Conversion.Providers.Pdf.PdfTools.EnsureEngine(Engine.Dependencies);
+        return true;
+    }
+
+    private async void PdfPages(string path)
+    {
+        try
+        {
+            if (!await PdfReadyAsync()) return;
+            int count;
+            using (var d = FileWheel.Conversion.Providers.Pdf.Pdfium.Open(path, null)) count = d.PageCount;
+            ShowWindow(new Tools.PdfPagesWindow(path, count));
+        }
+        catch (Exception ex) { Ui.Ui.Message(ConversionManager.Translate(ex).Message, image: MessageBoxImage.Warning); }
+    }
+
+    private async void PdfMerge(IReadOnlyList<string> files)
+    {
+        try
+        {
+            if (!await PdfReadyAsync()) return;
+            var dlg = new Tools.PdfMergeDialog(files);
+            if (!dlg.Run()) return;
+            var ordered = dlg.Ordered;
+            var target = Tools.PdfImaging.Output(ordered[0], FileWheel.Core.Localization.Loc.T("fusionné"));
+            _app.Operations.Start($"Fusion de {ordered.Count} PDF", op => Task.Run<string?>(() =>
+            {
+                op.Outputs.Add(FileWheel.Conversion.Providers.Pdf.PdfTools.Merge(ordered, target, op.Token));
+                return (string?)null;
+            }), op => _app.NotifyOperation(op));
+        }
+        catch (Exception ex) { Ui.Ui.Message(ConversionManager.Translate(ex).Message, image: MessageBoxImage.Warning); }
+    }
+
+    private async void PdfCompress(IReadOnlyList<string> files)
+    {
+        try
+        {
+            if (!await PdfReadyAsync()) return;
+            var dlg = new Tools.PdfCompressDialog(files.Count);
+            if (!dlg.Run()) return;
+            var options = new FileWheel.Conversion.Providers.Pdf.PdfCompressOptions(dlg.Quality, dlg.Dpi, Tools.PdfImaging.Jpeg);
+            foreach (var f in files)
+            {
+                var file = f;
+                _app.Operations.Start($"Compression de {Path.GetFileName(file)}", op => Task.Run<string?>(() =>
+                {
+                    var (path, stats) = FileWheel.Conversion.Providers.Pdf.PdfTools.Compress(file, options,
+                        Tools.PdfImaging.Output(file, FileWheel.Core.Localization.Loc.T("compressé")),
+                        new SyncProgress<ConversionProgress>(p => _app.Operations.Report(op, p.Fraction, p.Stage)), op.Token);
+                    long before = new FileInfo(file).Length, after = new FileInfo(path).Length;
+                    if (stats.Recompressed == 0 || after >= before)
+                    {
+                        File.Delete(path);
+                        return FileWheel.Core.Localization.Loc.T("Rien à gagner : ce PDF ne contient pas d'images à alléger.");
+                    }
+                    op.Outputs.Add(path);
+                    op.Stage = $"{Ui.Ui.Size(before)} → {Ui.Ui.Size(after)}";
+                    return null;
+                }), op => _app.NotifyOperation(op));
+            }
+        }
+        catch (Exception ex) { Ui.Ui.Message(ConversionManager.Translate(ex).Message, image: MessageBoxImage.Warning); }
+    }
+
+    private async void PdfRotate(IReadOnlyList<string> files, int quarterTurns)
+    {
+        try
+        {
+            if (!await PdfReadyAsync()) return;
+            foreach (var f in files)
+            {
+                var file = f;
+                _app.Operations.Start($"Rotation de {Path.GetFileName(file)}", op => Task.Run<string?>(() =>
+                {
+                    op.Outputs.Add(FileWheel.Conversion.Providers.Pdf.PdfTools.Rotate(file, null, quarterTurns,
+                        Tools.PdfImaging.Output(file, FileWheel.Core.Localization.Loc.T("pivoté"))));
+                    return (string?)null;
+                }), op => _app.NotifyOperation(op));
+            }
+        }
+        catch (Exception ex) { Ui.Ui.Message(ConversionManager.Translate(ex).Message, image: MessageBoxImage.Warning); }
     }
 
     // ------------------------------------------------------------------ conversion directe

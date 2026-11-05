@@ -1,6 +1,6 @@
 # Contributing to FileWheel
 
-Thanks for your interest! FileWheel is free software (MIT). Discussions can be in English or French. The application's user interface is in French.
+Thanks for your interest! FileWheel is free software (MIT). Discussions can be in English or French. The application's interface is available in English and French.
 
 ## Reporting a problem
 
@@ -25,6 +25,7 @@ Security vulnerability: do not disclose it in a public Issue; use the repository
    - on Linux: `build/ci-linux.sh` compiles the engine and runs the tests;
    - GitHub Actions compiles the Windows version and the installer for every Pull request.
 4. If you add a conversion: `dotnet run --project tests/FileWheel.Tests -- --catalogue docs/CONVERSIONS.md`.
+5. Interface texts are written in French in the code and translated at display time: add the English text for every new French string to `src/FileWheel.Core/Localization/en.json` (`"texte français": "English text"`, with `{0}`, `{1}` for variable parts). The Windows check of GitHub Actions lists the texts still untranslated (`en-textes-non-traduits.txt` in the captures).
 
 ## Project rules
 

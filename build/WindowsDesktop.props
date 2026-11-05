@@ -6,8 +6,13 @@
       generees depuis les sources publiques de dotnet/wpf (build/make-wpf-ref.sh). Le resultat
       n'est pas executable ; il sert a garantir que le code compile avant d'arriver sur Windows.
   -->
+  <!--
+    Sous Windows, la cible inclut le SDK Windows 10 (19041) pour les API WinRT (reconnaissance de texte
+    Windows.Media.Ocr). Le programme reste compatible Windows 10 1809 et plus recent.
+  -->
   <PropertyGroup Condition="'$(FwIsWindows)' == 'true'">
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
   <PropertyGroup Condition="'$(FwIsWindows)' != 'true'">

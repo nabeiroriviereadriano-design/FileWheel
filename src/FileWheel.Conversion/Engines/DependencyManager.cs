@@ -34,7 +34,11 @@ public sealed class InstalledEngine
 }
 
 /// <summary>Informations montrees a l'utilisateur AVANT tout telechargement (consentement).</summary>
-public sealed record InstallOffer(EngineDefinition Engine, string Version, string AssetName, string Url, long Size, string Sha256, string? HelperUrl, string? HelperSha256);
+public sealed record InstallOffer(EngineDefinition Engine, string Version, string AssetName, string Url, long Size, string Sha256, string? HelperUrl, string? HelperSha256)
+{
+    /// <summary>Installation « Pinned » : plusieurs fichiers aux empreintes fixees dans le code.</summary>
+    public IReadOnlyList<PinnedFile>? Files { get; init; }
+}
 
 /// <summary>
 /// Disponibilite des outils externes et installation a la demande.
@@ -211,6 +215,14 @@ public sealed class DependencyManager
     public async Task<InstallOffer> PrepareGitHubInstallAsync(string id, CancellationToken ct)
     {
         var def = EngineCatalog.Get(id);
+        if (def.Method == InstallMethod.Pinned)
+        {
+            if (!OperatingSystem.IsWindows() || def.PinnedFiles.Count == 0)
+                throw new ConversionException(ConversionErrorKind.NotSupported, $"{def.Name} ne s'installe automatiquement que sous Windows 64 bits.");
+            var first = def.PinnedFiles[0];
+            return new InstallOffer(def, def.PinnedVersion ?? "?", string.Join(" + ", def.PinnedFiles.Select(f => Path.GetFileName(new Uri(f.Url).AbsolutePath))),
+                first.Url, def.PinnedFiles.Sum(f => f.Size), first.Sha256, null, null) { Files = def.PinnedFiles };
+        }
         if (def.Method != InstallMethod.GitHubRelease || def.GitHubRepo is null || def.AssetPattern is null)
             throw new ConversionException(ConversionErrorKind.NotSupported, $"{def.Name} ne s'installe pas automatiquement depuis FileWheel.");
         using var req = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/repos/{def.GitHubRepo}/releases/latest");
@@ -259,6 +271,13 @@ public sealed class DependencyManager
         var dl = Path.Combine(AppPaths.DownloadsDir, offer.AssetName);
         try
         {
+            if (offer.Files is { Count: > 0 } files)
+            {
+                Directory.CreateDirectory(staging);
+                await InstallPinnedAsync(files, staging, progress, ct).ConfigureAwait(false);
+                await CommitAsync(def, offer, staging, dest).ConfigureAwait(false);
+                return;
+            }
             await DownloadVerifiedAsync(offer.Url, dl, offer.Sha256, offer.Size, progress, ct).ConfigureAwait(false);
             Directory.CreateDirectory(staging);
             var limits = new ExtractionLimits(4L << 30, 50_000, 1000);
@@ -295,26 +314,63 @@ public sealed class DependencyManager
                 File.Copy(dl, Path.Combine(staging, offer.AssetName));
             }
 
-            if (FindIn(staging, def.ExeNames) is null)
-                throw new ConversionException(ConversionErrorKind.EngineMissing, $"Le paquet téléchargé ne contient pas {string.Join(" / ", def.ExeNames.Take(1))}.");
-
-            if (Directory.Exists(dest)) Directory.Delete(dest, recursive: true);
-            Directory.Move(staging, dest);
-            lock (_gate)
-            {
-                _config.Installed[def.Id] = new InstalledEngine
-                {
-                    Version = offer.Version, Folder = dest, SourceUrl = offer.Url, Sha256 = offer.Sha256, InstalledAt = DateTime.UtcNow,
-                };
-                JsonStore.Save(AppPaths.EnginesFile, _config);
-            }
-            Log.Info($"Moteur installé : {def.Name} {offer.Version} ({offer.AssetName}, sha256 {offer.Sha256[..12]}…)");
-            Refresh();
+            await CommitAsync(def, offer, staging, dest).ConfigureAwait(false);
         }
         finally
         {
             try { if (File.Exists(dl)) File.Delete(dl); } catch { }
             try { if (Directory.Exists(staging)) Directory.Delete(staging, true); } catch { }
+        }
+    }
+
+    private Task CommitAsync(EngineDefinition def, InstallOffer offer, string staging, string dest)
+    {
+        if (FindIn(staging, def.ExeNames) is null)
+            throw new ConversionException(ConversionErrorKind.EngineMissing, $"Le paquet téléchargé ne contient pas {string.Join(" / ", def.ExeNames.Take(1))}.");
+        if (Directory.Exists(dest)) Directory.Delete(dest, recursive: true);
+        Directory.Move(staging, dest);
+        lock (_gate)
+        {
+            _config.Installed[def.Id] = new InstalledEngine
+            {
+                Version = offer.Version, Folder = dest, SourceUrl = offer.Url, Sha256 = offer.Sha256, InstalledAt = DateTime.UtcNow,
+            };
+            JsonStore.Save(AppPaths.EnginesFile, _config);
+        }
+        Log.Info($"Moteur installé : {def.Name} {offer.Version} ({offer.AssetName}, sha256 {offer.Sha256[..12]}…)");
+        Refresh();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Telecharge chaque fichier, verifie son empreinte fixee, extrait seulement l'element utile des archives.</summary>
+    private static async Task InstallPinnedAsync(IReadOnlyList<PinnedFile> files, string staging, IProgress<ConversionProgress>? progress, CancellationToken ct)
+    {
+        foreach (var f in files)
+        {
+            if (!f.Url.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase))
+                throw new ConversionException(ConversionErrorKind.Unsafe, "Adresse de téléchargement inattendue : installation refusée.");
+            var name = Path.GetFileName(new Uri(f.Url).AbsolutePath);
+            var dl = Path.Combine(AppPaths.DownloadsDir, name);
+            try
+            {
+                await DownloadVerifiedAsync(f.Url, dl, f.Sha256, f.Size, progress, ct).ConfigureAwait(false);
+                if (f.ExtractEntry is null)
+                {
+                    File.Move(dl, Path.Combine(staging, name), overwrite: true);
+                    continue;
+                }
+                progress?.Report(new ConversionProgress(null, "Extraction…"));
+                using var zip = ZipFile.OpenRead(dl);
+                var entry = zip.GetEntry(f.ExtractEntry)
+                    ?? throw new ConversionException(ConversionErrorKind.Corrupt, $"Élément attendu absent du paquet : {f.ExtractEntry}");
+                if (entry.Length > 1L << 30) throw new ConversionException(ConversionErrorKind.TooLarge, "Élément anormalement volumineux : installation refusée.");
+                // Nom de sortie fixe (dernier segment), jamais un chemin venant de l'archive
+                entry.ExtractToFile(Path.Combine(staging, Path.GetFileName(f.ExtractEntry)), overwrite: true);
+            }
+            finally
+            {
+                try { if (File.Exists(dl)) File.Delete(dl); } catch { }
+            }
         }
     }
 
@@ -335,7 +391,8 @@ public sealed class DependencyManager
     public static IReadOnlyList<string> WingetArguments(EngineDefinition def) =>
         def.WingetId is null ? [] : ["install", "--id", def.WingetId, "--exact", "--source", "winget", "--accept-package-agreements", "--accept-source-agreements"];
 
-    private static async Task DownloadVerifiedAsync(string url, string target, string expectedSha, long expectedSize,
+    /// <summary>Telecharge un fichier en verifiant son empreinte SHA-256 (fichier partiel supprime en cas d'echec).</summary>
+    public static async Task DownloadVerifiedAsync(string url, string target, string expectedSha, long expectedSize,
         IProgress<ConversionProgress>? progress, CancellationToken ct)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(target)!);

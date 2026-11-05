@@ -1,0 +1,11 @@
+name: Idea / Idée
+description: Suggest an improvement / Proposer une amélioration
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea / Votre idée
+      description: What would you like FileWheel to do, and in which situation? / Que voudriez-vous que FileWheel fasse, et dans quelle situation ?
+    validations:
+      required: true

@@ -16,6 +16,21 @@ public static class AppPaths
     /// <summary>Redirige toutes les racines (utilise par les tests).</summary>
     public static void OverrideRoot(string? root) => _overrideRoot = root;
 
+    /// <summary>Nom du fichier qui, place a cote de FileWheel.exe, active le mode portable.</summary>
+    public const string PortableMarker = "FileWheel.portable";
+
+    /// <summary>Version portable : reglages et donnees dans « FileWheel-data » a cote de l'executable.</summary>
+    public static bool IsPortable { get; private set; }
+
+    /// <summary>Active le mode portable si le fichier marqueur est present dans <paramref name="exeDir"/>.</summary>
+    public static bool DetectPortable(string exeDir)
+    {
+        if (!File.Exists(Path.Combine(exeDir, PortableMarker))) return false;
+        IsPortable = true;
+        _overrideRoot = Path.Combine(exeDir, "FileWheel-data");
+        return true;
+    }
+
     public static string ConfigDir => Ensure(_overrideRoot is { Length: > 0 }
         ? Path.Combine(_overrideRoot, "config")
         : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FileWheel"));

@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
+using FileWheel.Core.Localization;
 using FileWheel.App.Ui;
 
 namespace FileWheel.App.Tools;
@@ -144,7 +145,7 @@ public sealed class BackgroundWindow : ToolWindow
         var scene = Compose(_preview, out _, out _);
         _view.Child = scene;
         Compose(_src.Bitmap, out int fw, out int fh);
-        Status.Text = $"Résultat : {fw} × {fh} px (PNG)";
+        Status.Text = Loc.T($"Résultat : {fw} × {fh} px (PNG)");
     }
 
     private void Save()

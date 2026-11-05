@@ -7,6 +7,7 @@ using FileWheel.Conversion;
 using FileWheel.Conversion.Core;
 using FileWheel.Core.Actions;
 using FileWheel.Core.Input;
+using FileWheel.Core.Localization;
 using FileWheel.Core.Logging;
 using FileWheel.Core.Settings;
 using FileWheel.Core.Util;
@@ -42,6 +43,10 @@ public sealed class FileWheelApp : Application
     private TrayBadge _badge;
     private string _trayKey = "";
     private int _trayPhase;
+    // Mises a jour
+    private DispatcherTimer? _updateTimer;
+    private FileWheel.Conversion.Updates.UpdateInfo? _available;
+    private bool _balloonIsUpdate;
 
     public AppSettings Settings { get; private set; } = new();
     public List<CustomAction> CustomActions { get; private set; } = new();
@@ -66,6 +71,7 @@ public sealed class FileWheelApp : Application
         CustomActions = CustomActionStore.Load();
 
         Engine = new ConversionEngine(() => Settings.Conversion, [new WicImageProvider()]);
+        Services.Engine = Engine;
         Engine.Queue.JobChanged += job => Dispatcher.BeginInvoke(() => OnJobChanged(job));
         _executor = new ActionExecutor(this);
 
@@ -103,6 +109,7 @@ public sealed class FileWheelApp : Application
         _tray.Activated += () => { ClearBadge(); OpenTasks(); };
         _tray.BalloonClicked += () =>
         {
+            if (_balloonIsUpdate && _available is not null) { _balloonIsUpdate = false; ShowUpdate(); return; }
             if (_lastOutput is not null && (File.Exists(_lastOutput) || Directory.Exists(_lastOutput)))
                 FileWheel.Windows.Shell.ShellOps.RevealInExplorer([_lastOutput]);
             else OpenTasks();
@@ -118,16 +125,29 @@ public sealed class FileWheelApp : Application
         Theme.SystemAppearanceChanged += () => { _trayKey = ""; UpdateTrayIcon(); };
         UpdateTrayIcon();
 
+        // Mises a jour : premiere verification 45 s apres le demarrage, puis toutes les 6 h (au plus une fois par jour)
+        _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(45) };
+        _updateTimer.Tick += async (_, _) =>
+        {
+            _updateTimer.Interval = TimeSpan.FromHours(6);
+            await CheckForUpdatesAsync(manual: false);
+        };
+        _updateTimer.Start();
+
         Log.Info($"FileWheel {AppInfo.Version} démarré ({(_background ? "arrière-plan" : "interactif")}).");
 
         if (firstRun)
         {
             // Apres FileWheel-Setup, le demarrage automatique a deja ete choisi dans l'assistant.
             var dlg = new FirstRunDialog(Settings.Trigger.Chord.ToString(), askStartup: !_afterSetup);
-            if (dlg.Run() && !_afterSetup)
+            if (dlg.Run())
             {
-                try { AutoStart.Set(dlg.StartWithWindows); Settings.StartWithWindows = dlg.StartWithWindows; }
-                catch (Exception ex) { Log.Error("Démarrage automatique", ex); }
+                Settings.Updates.CheckAutomatically = dlg.CheckUpdates;
+                if (!_afterSetup)
+                {
+                    try { AutoStart.Set(dlg.StartWithWindows); Settings.StartWithWindows = dlg.StartWithWindows; }
+                    catch (Exception ex) { Log.Error("Démarrage automatique", ex); }
+                }
             }
             SaveSettings();
         }
@@ -175,8 +195,8 @@ public sealed class FileWheelApp : Application
     // ------------------------------------------------------------------ zone de notification
 
     private string TrayTooltip() => Settings.WheelEnabled
-        ? $"FileWheel — actif ({Settings.Trigger.Chord} pendant un glisser)"
-        : "FileWheel — roue désactivée";
+        ? Loc.F("FileWheel — actif ({0} pendant un glisser)", Settings.Trigger.Chord)
+        : Loc.T("FileWheel — roue désactivée");
 
     // ------------------------------------------------------------------ icone de notification
 
@@ -232,14 +252,20 @@ public sealed class FileWheelApp : Application
         bool startup = false;
         try { startup = AutoStart.IsEnabled(); } catch { }
         int active = Engine.Queue.ActiveCount + Operations.All.Count(o => !o.IsFinished);
-        var menu = new List<TrayMenuItem>
+        var menu = new List<TrayMenuItem>();
+        if (_available is not null)
+        {
+            menu.Add(new() { Id = "update", Text = Loc.F("Installer la mise à jour {0}", _available.Version.ToString(3)) });
+            menu.Add(TrayMenuItem.Sep());
+        }
+        menu.AddRange(new List<TrayMenuItem>
         {
             new() { Id = "tasks", Text = active > 0 ? $"Tâches en cours ({active})" : "Tâches et historique", IsDefault = true },
             new() { Id = "converter", Text = "Convertisseur…" },
             TrayMenuItem.Sep(),
             new() { Id = "toggle", Text = "Roue activée", Checked = Settings.WheelEnabled },
             new() { Id = "startup", Text = "Lancer au démarrage de Windows", Checked = startup },
-        };
+        });
         if (Settings.Favorites.Count > 0)
         {
             var fav = new TrayMenuItem { Id = "favorites", Text = "Favoris" };
@@ -257,10 +283,23 @@ public sealed class FileWheelApp : Application
         diag.Children.Add(new() { Id = "testwheel", Text = "Tester l'affichage de la roue" });
         diag.Children.Add(new() { Id = "diagmode", Text = "Mode diagnostic (journal détaillé)", Checked = _hooks?.Diagnostic == true });
         diag.Children.Add(new() { Id = "logs", Text = "Ouvrir le dossier des journaux" });
+        diag.Children.Add(TrayMenuItem.Sep());
+        diag.Children.Add(new() { Id = "report", Text = "Signaler un problème…" });
+        diag.Children.Add(new() { Id = "checkupdate", Text = "Rechercher les mises à jour" });
         menu.Add(diag);
         menu.Add(TrayMenuItem.Sep());
         menu.Add(new() { Id = "quit", Text = "Quitter FileWheel" });
+        TranslateMenu(menu);
         return menu;
+    }
+
+    private static void TranslateMenu(IEnumerable<TrayMenuItem> items)
+    {
+        foreach (var i in items)
+        {
+            if (i.Text is { Length: > 0 }) i.Text = Loc.T(i.Text);
+            TranslateMenu(i.Children);
+        }
     }
 
     private void OnTrayCommand(string id)
@@ -301,6 +340,9 @@ public sealed class FileWheelApp : Application
                         Notify("Mode diagnostic activé", "Refaites le geste (glisser + touche) 2 ou 3 fois, puis envoyez le journal (Dépannage › Ouvrir le dossier des journaux).");
                     break;
                 case "quit": Quit(); break;
+                case "update": ShowUpdate(); break;
+                case "checkupdate": _ = CheckForUpdatesAsync(manual: true); break;
+                case "report": new ReportProblemDialog().Run(); break;
                 default:
                     if (id.StartsWith("fav:") && int.TryParse(id[4..], out int i) && i < Settings.Favorites.Count)
                         FileWheel.Windows.Shell.ShellOps.Open(Settings.Favorites[i], IntPtr.Zero);
@@ -314,11 +356,97 @@ public sealed class FileWheelApp : Application
         }
     }
 
+    // ------------------------------------------------------------------ mises a jour
+
+    /// <summary>Verifie la derniere version publiee. Silencieux sauf si une version plus recente existe (ou demande manuelle).</summary>
+    public async Task CheckForUpdatesAsync(bool manual)
+    {
+        var u = Settings.Updates;
+        if (!manual && (!u.CheckAutomatically || u.LastCheckUtc is { } last && DateTime.UtcNow - last < TimeSpan.FromHours(20))) return;
+        try
+        {
+            var info = await FileWheel.Conversion.Updates.Updater.CheckAsync();
+            u.LastCheckUtc = DateTime.UtcNow;
+            SaveSettings();
+            if (info is null)
+            {
+                Log.Info("Mises à jour : FileWheel est à jour.");
+                if (manual) Ui.Ui.Message(Loc.F("FileWheel {0} est à jour.", AppInfo.Version));
+                return;
+            }
+            Log.Info($"Mise à jour disponible : {info.Version}");
+            _available = info;
+            if (manual) { ShowUpdate(); return; }
+            if (u.SkippedVersion == info.Version.ToString(3)) return;
+            _balloonIsUpdate = true;
+            Notify(Loc.F("FileWheel {0} est disponible", info.Version.ToString(3)), "Cliquez ici pour voir les nouveautés et mettre à jour.");
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("Vérification des mises à jour : " + ex.Message);
+            if (manual) Ui.Ui.Message("Impossible de vérifier les mises à jour : " + ConversionManager.Translate(ex).Message, image: MessageBoxImage.Warning);
+        }
+    }
+
+    public void ShowUpdate()
+    {
+        var info = _available;
+        if (info is null) { _ = CheckForUpdatesAsync(manual: true); return; }
+        var dlg = new UpdateDialog(info, AppPaths.IsPortable);
+        dlg.Run();
+        switch (dlg.Result)
+        {
+            case UpdateDialog.Choice.Skip:
+                Settings.Updates.SkippedVersion = info.Version.ToString(3);
+                SaveSettings();
+                break;
+            case UpdateDialog.Choice.Install:
+                _ = InstallUpdateAsync(info);
+                break;
+        }
+    }
+
+    private async Task InstallUpdateAsync(FileWheel.Conversion.Updates.UpdateInfo info)
+    {
+        int running = Engine.Queue.ActiveCount + Operations.All.Count(o => !o.IsFinished);
+        if (running > 0) { Ui.Ui.Message(Loc.F("{0} tâche(s) en cours : la mise à jour pourra être installée quand elles seront terminées.", running)); return; }
+        var progress = new ProgressDialog(Loc.F("Mise à jour vers FileWheel {0}", info.Version.ToString(3)));
+        progress.Show();
+        try
+        {
+            var setup = await FileWheel.Conversion.Updates.Updater.DownloadAsync(info, new Progress<ConversionProgress>(p => progress.Update(p.Fraction, p.Stage)), progress.Token);
+            progress.Update(null, Loc.T("Installation… FileWheel va redémarrer."));
+            Log.Info("Lancement de l'installateur de mise à jour");
+            Log.Flush();
+            FileWheel.Conversion.Updates.Updater.RunInstaller(setup);
+            // L'installateur ferme FileWheel (--quitter) puis le relance une fois termine.
+        }
+        catch (OperationCanceledException) { progress.Close(); }
+        catch (Exception ex)
+        {
+            progress.Close();
+            Log.Error("Mise à jour", ex);
+            Ui.Ui.Message("Mise à jour impossible : " + ConversionManager.Translate(ex).Message, image: MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>Redemarre FileWheel (changement de langue) : la nouvelle instance attend la fin de celle-ci.</summary>
+    public void Restart()
+    {
+        try
+        {
+            var exe = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "FileWheel.exe");
+            Process.Start(new ProcessStartInfo(exe) { UseShellExecute = false, ArgumentList = { "--attendre", Environment.ProcessId.ToString(), "--parametres" } });
+            Quit();
+        }
+        catch (Exception ex) { Log.Error("Redémarrage", ex); }
+    }
+
     public void Notify(string title, string text, bool error = false)
     {
         if (_tray is null) return;
         if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(() => Notify(title, text, error)); return; }
-        _tray.ShowBalloon(title, text, error);
+        _tray.ShowBalloon(Loc.T(title), Loc.T(text), error);
     }
 
     /// <summary>Un outil a cree un fichier : notification (clic = afficher dans l'Explorateur) et pastille verte.</summary>
@@ -327,7 +455,7 @@ public sealed class FileWheelApp : Application
         _lastOutput = path;
         SetBadge(TrayBadge.Success);
         UpdateTrayIcon();
-        Notify(tool + " : terminé", Path.GetFileName(path));
+        Notify(Loc.F("{0} : terminé", tool), Path.GetFileName(path));
     }
 
     public void NotifyOperation(FileOperation op)

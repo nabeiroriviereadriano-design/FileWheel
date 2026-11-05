@@ -39,4 +39,14 @@ public static class ActionIds
     public const string ImageCompress = "image.compress";
     public const string ImageAnnotate = "image.annotate";
     public const string ImageMetadata = "image.metadata";
+    public const string ImageRemoveBackground = "image.removebg";   // detourage IA (moteur optionnel)
+
+    // Reconnaissance de texte (OCR Windows) : images et PDF scannes
+    public const string RecognizeText = "ocr.text";
+
+    // Outils PDF (le resultat est un nouveau PDF a cote de l'original)
+    public const string PdfMerge = "pdf.merge";
+    public const string PdfCompress = "pdf.compress";
+    public const string PdfPages = "pdf.pages";                    // extraire / supprimer / pivoter des pages choisies
+    public const string PdfRotate = "pdf.rotate";                  // Argument = quarts de tour (1, 2, 3)
 }

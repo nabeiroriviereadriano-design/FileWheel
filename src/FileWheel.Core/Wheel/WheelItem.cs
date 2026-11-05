@@ -10,7 +10,9 @@ public static class Glyphs
         Image = "", Video = "", Audio = "", Document = "", Data = "", Book = "",
         Model3D = "", Font = "", Mail = "", Calendar = "", Contact = "", Check = "",
         Resize = "", Lightning = "", List = "", Shortcut = "", Path = "", Star = "",
-        Crop = "\uE7A8", Background = "\uE790", Compress = "\uE73F", Annotate = "\uE70F", Metadata = "\uE946";
+        Crop = "\uE7A8", Background = "\uE790", Compress = "\uE73F", Annotate = "\uE70F", Metadata = "\uE946",
+        RemoveBackground = "\uE8C6", TextRecognition = "\uE8FE", Pdf = "\uEA90", Merge = "\uE8AB", Pages = "\uE7C3",
+        RotateRight = "\uE7AD", RotateLeft = "\uE7A7", Update = "\uE895", Bug = "\uEBE8", Language = "\uF2B7";
 }
 
 /// <summary>

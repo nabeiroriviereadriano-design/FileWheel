@@ -27,7 +27,7 @@ public abstract class ToolWindow : Window
 
     protected ToolWindow(string title, string fileName, double width = 1080, double height = 720)
     {
-        Title = $"{title} — {fileName}";
+        Title = $"{FileWheel.Core.Localization.Loc.T(title)} — {fileName}";
         Width = width;
         Height = height;
         MinWidth = 720;

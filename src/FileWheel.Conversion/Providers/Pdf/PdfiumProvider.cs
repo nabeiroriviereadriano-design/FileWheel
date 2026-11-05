@@ -106,7 +106,7 @@ public sealed class PdfiumProvider : ProviderBase
             }
             var text = sb.ToString();
             if (text.Count(char.IsLetterOrDigit) < pages.Count * 5)
-                warnings.Add("Très peu de texte trouvé : ce PDF est probablement une numérisation (images). L'OCR n'est pas inclus dans cette version.");
+                warnings.Add("Très peu de texte trouvé : ce PDF est probablement une numérisation (images). Utilisez « Reconnaître le texte » (outils PDF de la roue) pour le lire.");
             TextIO.WriteUtf8(req.TempOutput, text);
             return new ConversionResult([req.TempOutput], warnings);
         }

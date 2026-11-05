@@ -107,10 +107,31 @@ public sealed class ConversionSettings
     public int ExtractMaxRatio { get; set; } = 250;
 }
 
+/// <summary>Langue de l'interface.</summary>
+public enum UiLanguage
+{
+    /// <summary>Langue de Windows : francais si Windows est en francais, anglais sinon.</summary>
+    Auto,
+    French,
+    English,
+}
+
+/// <summary>Mises a jour de FileWheel (Releases GitHub du depot officiel).</summary>
+public sealed class UpdateSettings
+{
+    /// <summary>Verifie au demarrage puis une fois par jour si une nouvelle version est publiee. Aucun fichier n'est envoye.</summary>
+    public bool CheckAutomatically { get; set; } = true;
+    /// <summary>Version que l'utilisateur a choisi d'ignorer (« Plus tard » sur cette version).</summary>
+    public string? SkippedVersion { get; set; }
+    public DateTime? LastCheckUtc { get; set; }
+}
+
 public sealed class AppSettings
 {
     public int SchemaVersion { get; set; } = 1;
     public bool WheelEnabled { get; set; } = true;
+    public UiLanguage Language { get; set; } = UiLanguage.Auto;
+    public UpdateSettings Updates { get; set; } = new();
     /// <summary>null = l'utilisateur n'a pas encore ete interroge (premier lancement).</summary>
     public bool? StartWithWindows { get; set; }
     public TriggerSettings Trigger { get; set; } = new();
@@ -127,6 +148,7 @@ public sealed class AppSettings
         Trigger ??= new();
         Wheel ??= new();
         Conversion ??= new();
+        Updates ??= new();
         SendToFolders ??= new();
         Favorites ??= new();
         if (!Trigger.Chord.IsValid) Trigger.SetChord(ActivationChord.Default);

@@ -82,6 +82,8 @@ public static class WheelMenuBuilder
             root.Children.Add(Tool("tool.compress", "Compresser", "COMPRESSER", Glyphs.Compress, ActionIds.ImageCompress, "Fichier plus léger", true, readable, why));
             root.Children.Add(Tool("tool.annotate", "Annoter / masquer", "ANNOTER", Glyphs.Annotate, ActionIds.ImageAnnotate, "Flèches, texte, zones cachées", single, readable, why));
             root.Children.Add(Tool("tool.meta", "Métadonnées", "INFOS", Glyphs.Metadata, ActionIds.ImageMetadata, "Voir et effacer (GPS…)", single, readable, why));
+            root.Children.Add(Tool("tool.removebg", "Détourer", "DÉTOURER", Glyphs.RemoveBackground, ActionIds.ImageRemoveBackground, "Retirer l'arrière-plan (IA locale)", single, readable, why));
+            root.Children.Add(Tool("tool.ocr", "Reconnaître le texte", "TEXTE", Glyphs.TextRecognition, ActionIds.RecognizeText, "Copier le texte de l'image", true, readable, why));
             var convert = BuildConvert(sel, conversions, false, false);
             root.Children.Add(new WheelItem
             {
@@ -103,6 +105,7 @@ public static class WheelMenuBuilder
                 Id = "convert.dialog", Label = "Autres formats…", Caption = "AUTRES", Glyph = Glyphs.Convert, Command = ActionIds.ConvertDialog,
                 Tooltip = "Tous les formats et réglages",
             });
+            if (sel.All(s => s.Format?.Id == "pdf")) root.Children.Add(BuildPdfTools(sel));
         }
 
         // Actions perso placees a la racine (sans depasser 8 secteurs)
@@ -117,6 +120,27 @@ public static class WheelMenuBuilder
         return root;
     }
 
+    /// <summary>Outils PDF : fusionner, compresser, pages (extraire / supprimer / pivoter), rotation rapide, texte (OCR).</summary>
+    public static WheelItem BuildPdfTools(IReadOnlyList<SelectedEntry> sel)
+    {
+        bool single = sel.Count == 1;
+        var pdf = new WheelItem { Id = "pdf", Label = "Outils PDF", Caption = "PDF", Glyph = Glyphs.Pdf, Tooltip = "Fusionner, compresser, pages…" };
+        var merge = Leaf("pdf.merge", single ? "Fusionner…" : $"Fusionner ({sel.Count})", Glyphs.Merge, ActionIds.PdfMerge, "Un seul PDF, dans l'ordre choisi");
+        if (single) { merge.Enabled = false; merge.DisabledReason = "Glissez plusieurs PDF"; }
+        pdf.Children.Add(merge);
+        var compress = Leaf("pdf.compress", "Compresser", Glyphs.Compress, ActionIds.PdfCompress, "Images allégées, texte intact");
+        pdf.Children.Add(compress);
+        var pages = Leaf("pdf.pages", "Pages…", Glyphs.Pages, ActionIds.PdfPages, "Extraire, supprimer, pivoter");
+        if (!single) { pages.Enabled = false; pages.DisabledReason = "Un seul fichier à la fois"; }
+        pdf.Children.Add(pages);
+        pdf.Children.Add(new WheelItem { Id = "pdf.rotate.right", Label = "Pivoter à droite", Caption = "↻ 90°", Glyph = Glyphs.RotateRight, Command = ActionIds.PdfRotate, Argument = "1", Tooltip = "Toutes les pages" });
+        pdf.Children.Add(new WheelItem { Id = "pdf.rotate.left", Label = "Pivoter à gauche", Caption = "↺ 90°", Glyph = Glyphs.RotateLeft, Command = ActionIds.PdfRotate, Argument = "3", Tooltip = "Toutes les pages" });
+        var ocr = Leaf("pdf.ocr", "Reconnaître le texte", Glyphs.TextRecognition, ActionIds.RecognizeText, "PDF scanné → texte (OCR)");
+        if (!single) { ocr.Enabled = false; ocr.DisabledReason = "Un seul fichier à la fois"; }
+        pdf.Children.Add(ocr);
+        return pdf;
+    }
+
     private static readonly Dictionary<string, string> Captions = new()
     {
         ["copy"] = "COPIER", ["moveto"] = "DÉPLACER", ["openwith"] = "OUVRIR AVEC", ["rename"] = "RENOMMER", ["recycle"] = "CORBEILLE",
@@ -127,6 +151,7 @@ public static class WheelMenuBuilder
         ["custom.new"] = "NOUVELLE", ["archive.extracthere"] = "ICI", ["archive.extractto"] = "VERS…", ["archive.test"] = "VÉRIFIER",
         ["archive.zip"] = "ZIP", ["archive.7z"] = "7Z", ["archive.tgz"] = "TAR.GZ", ["archive.custom"] = "OPTIONS",
         ["archive.to7z"] = "→ 7Z", ["archive.tozip"] = "→ ZIP",
+        ["pdf.merge"] = "FUSIONNER", ["pdf.compress"] = "COMPRESSER", ["pdf.pages"] = "PAGES", ["pdf.ocr"] = "TEXTE",
     };
 
     /// <summary>Libelle court d'un secteur (majuscules, 12 caracteres au plus).</summary>

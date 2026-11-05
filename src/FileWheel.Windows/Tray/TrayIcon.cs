@@ -9,7 +9,7 @@ namespace FileWheel.Windows.Tray;
 public sealed class TrayMenuItem
 {
     public string Id { get; init; } = "";
-    public string Text { get; init; } = "";
+    public string Text { get; set; } = "";
     public bool Checked { get; init; }
     public bool Enabled { get; init; } = true;
     public bool IsDefault { get; init; }

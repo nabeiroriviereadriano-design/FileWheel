@@ -9,6 +9,7 @@ using System.Windows.Threading;
 using FileWheel.Core.Input;
 using FileWheel.Core.Logging;
 using FileWheel.Core.Settings;
+using FileWheel.Core.Localization;
 using FileWheel.Core.Wheel;
 using FileWheel.Windows.Display;
 using FileWheel.Windows.SystemIntegration;
@@ -103,13 +104,13 @@ public sealed class WheelWindow : Window
         }
         if (_files.Count == 1)
         {
-            SummaryTitle = anyDir ? "Dossier" : Ui.Size(total);
+            SummaryTitle = anyDir ? Loc.T("Dossier") : Ui.Size(total);
             SummarySubtitle = System.IO.Path.GetFileName(_files[0].TrimEnd('\\'));
         }
         else
         {
-            SummaryTitle = $"{_files.Count} éléments";
-            SummarySubtitle = total > 0 ? Ui.Size(total) + (anyDir ? " + dossiers" : "") : "";
+            SummaryTitle = Loc.F("{0} éléments", _files.Count);
+            SummarySubtitle = total > 0 ? Ui.Size(total) + (anyDir ? Loc.T(" + dossiers") : "") : "";
         }
     }
     internal AppSettings Cfg => Settings?.Invoke() ?? new AppSettings();
@@ -176,6 +177,30 @@ public sealed class WheelWindow : Window
             Mode = WheelMode.Click,
         };
         _view.InvalidateVisual();
+    }
+
+    /// <summary>
+    /// Rendu de la roue pour une selection donnee, sans l'afficher (verification automatique, captures) :
+    /// <paramref name="branchId"/> ouvre un sous-menu, <paramref name="hoverId"/> met un secteur en surbrillance.
+    /// </summary>
+    internal FrameworkElement PreviewFor(IReadOnlyList<string> files, string? branchId = null, string? hoverId = null)
+    {
+        _files = files.ToList();
+        ComputeSummary();
+        var menu = MenuFactory?.Invoke(_files) ?? Placeholder("Aucune action");
+        _interaction = new WheelInteraction(menu, Cfg.Wheel.SubmenuDwellMs) { Mode = WheelMode.Click };
+        int IndexOf(string id) => _interaction.Items.ToList().FindIndex(i => i.Id == id);
+        if (branchId is not null && IndexOf(branchId) is var b && b >= 0) _interaction.OnRelease(b, Now);
+        if (hoverId is not null && IndexOf(hoverId) is var h && h >= 0) _interaction.OnPointer(h, Now);
+        double d = Cfg.Wheel.DiameterDip;
+        _view.Diameter = d;
+        _view.Opacity = 1;
+        _view.RenderTransform = Transform.Identity;
+        _view.Measure(new Size(d, d));
+        _view.Arrange(new Rect(0, 0, d, d));
+        _view.UpdateLayout();
+        _view.InvalidateVisual();
+        return _view;
     }
 
     public void Dismiss(string reason)
@@ -425,7 +450,7 @@ internal sealed class WheelView : FrameworkElement
             var brush = new SolidColorBrush(color);
             var (ix, iy) = layout.IconPosition(i, 0.5);
             var at = new Point(c.X + ix, c.Y + iy);
-            string caption = WheelMenuBuilder.CaptionOf(it);
+            string caption = Loc.T(WheelMenuBuilder.CaptionOf(it));
 
             if (it.TextFace)
             {
@@ -488,7 +513,7 @@ internal sealed class WheelView : FrameworkElement
             subtitle = !hoverItem.Enabled ? hoverItem.DisabledReason ?? "" : hoverItem.Tooltip;
             if (!hoverItem.Enabled) titleColor = Color.FromArgb(150, fg.R, fg.G, fg.B);
         }
-        else if (inter.InSubmenu) { title = inter.Breadcrumb; subtitle = centerHover ? "Retour" : "Centre = retour"; }
+        else if (inter.InSubmenu) { title = string.Join(" › ", inter.Breadcrumb.Split(" › ").Select(Loc.T)); subtitle = centerHover ? "Retour" : "Centre = retour"; }
         else if (centerHover) { title = "Annuler"; subtitle = "Lâcher ici ne fait rien"; }
         else if (inter.Items.Count == 1 && !inter.Items[0].Enabled) { title = "Indisponible"; subtitle = inter.Items[0].DisabledReason ?? ""; }
         else
@@ -497,6 +522,8 @@ internal sealed class WheelView : FrameworkElement
             title = _owner.SummaryTitle;
             subtitle = _owner.SummarySubtitle;
         }
+        title = Loc.T(title);
+        subtitle = Loc.T(subtitle);
         double textWidth = Inner * 1.62;
         var t1 = new FormattedText(title, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
             new Typeface(Ui.TextFont, FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal), Math.Clamp(Diameter / 22, 12, 18), new SolidColorBrush(titleColor), pixelsPerDip)

@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using FileWheel.Core.Localization;
 using FileWheel.App.Ui;
 
 namespace FileWheel.App.Tools;
@@ -75,7 +76,7 @@ public sealed class AnnotateWindow : ToolWindow
         Add(Ui.Ui.Hint("Ctrl+Z annule le dernier ajout."));
 
         SetPrimary("Enregistrer", Save);
-        Status.Text = $"{src.Bitmap.PixelWidth} × {src.Bitmap.PixelHeight} px";
+        Status.Text = Loc.T($"{src.Bitmap.PixelWidth} × {src.Bitmap.PixelHeight} px");
     }
 
     private Brush Stroke => new SolidColorBrush(_color);
@@ -219,7 +220,7 @@ public sealed class AnnotateWindow : ToolWindow
 
     private void Save()
     {
-        if (_undo.Count == 0) { Status.Text = "Rien à enregistrer : ajoutez au moins une annotation."; return; }
+        if (_undo.Count == 0) { Status.Text = Loc.T("Rien à enregistrer : ajoutez au moins une annotation."); return; }
         var bmp = _src.Bitmap;
         var layer = new Canvas { Width = bmp.PixelWidth, Height = bmp.PixelHeight };
         foreach (var el in _surface.Overlay.Children.Cast<UIElement>().ToList())

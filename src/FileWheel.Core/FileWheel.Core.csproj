@@ -5,6 +5,9 @@
     <RootNamespace>FileWheel.Core</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Localization\en.json" LogicalName="FileWheel.Core.Localization.en.json" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="FileWheel.Tests" />
   </ItemGroup>
 </Project>

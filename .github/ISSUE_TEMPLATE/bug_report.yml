@@ -1,0 +1,29 @@
+name: Bug report / Signaler un problème
+description: Something does not work as expected / Quelque chose ne fonctionne pas comme prévu
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! In FileWheel, *Settings › About › Report a problem* fills this form for you (version, Windows, cleaned log).
+        Merci pour le signalement ! Dans FileWheel, *Paramètres › À propos › Signaler un problème* remplit ce formulaire pour vous.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened? / Que s'est-il passé ?
+      description: What you were doing, what you expected, what happened instead. / Ce que vous faisiez, ce que vous attendiez, ce qui s'est passé.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: FileWheel and Windows versions / Versions de FileWheel et de Windows
+      placeholder: FileWheel 0.3.0 · Microsoft Windows 10.0.26100 · X64 · fr
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log excerpt / Extrait du journal
+      description: File names and paths are masked by FileWheel; please re-read before posting. / Les noms de fichiers et chemins sont masqués par FileWheel ; relisez avant de publier.
+      render: text
