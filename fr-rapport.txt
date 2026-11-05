@@ -1,0 +1,35 @@
+﻿Moteurs : ffmpeg=non, ffprobe=non, magick=oui, 7zip=oui, pdfium=oui, libreoffice=non, calibre=non, detourage=oui, vcredist=oui
+roue-image : OK (480×480)
+roue-pdf : OK (480×480)
+roue-pdf-outils : OK (480×480)
+roue-pdf-fichier : OK (480×480)
+roue-classique : OK (480×480)
+parametres-general : OK (1356×1082)
+parametres-declenchement : OK (1356×1082)
+parametres-roue : OK (1356×1082)
+parametres-conversion : OK (1356×1082)
+parametres-moteurs : OK (1356×1082)
+parametres-actions-personnalisees : OK (1356×1082)
+parametres-historique : OK (1356×1082)
+parametres-a-propos : OK (1356×1082)
+outil-recadrer : OK (1542×1022)
+outil-fond : OK (1542×1022)
+outil-compresser : OK (1446×902)
+outil-annoter : OK (1542×1022)
+outil-infos : OK (1446×902)
+outil-detourer : OK (1542×1022)
+outil-texte-image : OK (1446×962)
+pdf-pages : OK (1542×1022)
+outil-texte-pdf : OK (1446×962)
+conversion-rapide : OK (1056×1082)
+convertisseur : OK (1494×1064)
+taches : OK (996×734)
+bienvenue : OK (816×617)
+pdf-compresser : OK (756×377)
+pdf-fusionner : OK (816×615)
+mise-a-jour : OK (876×561)
+signaler : OK (996×840)
+accord-moteur : OK (876×719)
+OCR : langues = en-US
+OCR : texte reconnu = Drag a file, hold Alt, drop it on the wheel. |  | Convert, compress, crop and recognize text.
+Mise à jour : analyse de la Release OK

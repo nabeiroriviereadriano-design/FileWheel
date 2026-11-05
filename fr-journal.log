@@ -1,0 +1,3 @@
+﻿2026-11-05 06:30:49.712 [INF] [  2] Mode capture (fr) → D:\a\FileWheel\FileWheel\captures
+2026-11-05 06:30:53.492 [INF] [  2] Conversion builtin-docs:Convert:txt>pdf : rapport.txt -> rapport.pdf
+2026-11-05 06:30:53.512 [INF] [ 11] Conversion réussie en 0.0 s : %USERPROFILE%\AppData\Local\Temp\filewheel-capture-fr\data\exemples\rapport.pdf
